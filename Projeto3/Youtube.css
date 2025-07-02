@@ -1,0 +1,489 @@
+header {
+    display: grid;
+    grid-template-columns: auto 0.6fr 1fr 0.5fr auto;
+    align-items: center;
+    padding: 10px 5px;
+    gap: 7px;
+}
+
+body {
+    margin: 0 auto;
+    width: 100%;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.botao3bar {
+    background-image: url('imagens/3barrinhas.png');
+    width: 32px;
+    height: 32px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background-color: transparent;
+    border: 1px solid white;
+}
+
+.botao3bar:hover {
+    opacity: 0.8;
+    background-color: #e2e1e1;
+    border-radius: 50%;
+}
+
+.botaoyt {
+    background-image: url('imagens/youtube-logo.png');
+    width: 126px;
+    height: 28px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: left center;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    background-color: transparent;
+    justify-self: start;
+}
+
+.botaoyt:hover {
+    opacity: 0.9;
+}
+
+.unir{
+    display: flex;
+    flex-direction: row;
+    border: none;
+    outline: none;
+    width: 100%;
+    height: 40px;
+    margin: 0;
+    padding: 0;
+    min-width: 97px;
+    width: 100%;
+    max-width: 620px;
+    align-items: center;
+}
+
+.barrapesq {
+    border: none;
+    height: 100%;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: larger;
+    outline: none;
+    width: 100%;
+    padding: 0 10px;
+}
+
+.borda {
+    display: grid;
+    border: 1px solid #ccc;
+    border-radius: 20px 0 0 20px;
+    height: 30px;
+    grid-template-columns: 1fr auto auto auto;
+    grid-template-rows: 1fr;
+    grid-column: 3;
+    align-items: center;
+    padding: 5px;
+    justify-self: center;
+    width: 100%;
+    min-width: 97px;
+    max-width: 620px;
+    overflow: hidden;
+    gap: 3px;
+    margin-left: 10px;
+}
+ 
+.botaotecl {
+    background-image: url('imagens/tecladopesquisa.png');
+    width: 22px;
+    height: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+.botaotecl:hover {
+    opacity: 0.9;
+}
+
+.bordalupa{
+    border: 1px solid #ccc;
+    border-left: none;
+    border-radius: 0px 50px 50px 0px;
+    height: 30px;
+    align-items: center;
+    padding: 5px;
+    justify-self: center;
+    width: 60px;
+    min-width: 30px;
+    overflow: hidden;
+    background-color: #f7f7f7;
+    cursor: pointer;
+    display: flex;
+    margin-left: -2px;
+}
+
+.bordalupa:hover {
+    background-color: #e2e2e2;
+}
+
+.botaolupa {
+    background-image: url('imagens/lupa.png');
+    width: 25px;
+    height: 25px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+    margin-left: 30%;
+}
+
+.botaomic {
+    background-image: url('imagens/microfone.png');
+    width: 23px;
+    height: 23px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+.fundomic {
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    background-color: #f0f0f0;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.fundomic:hover {
+    background-color: #e0e0e0;
+}
+
+.juntar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.juntarbot {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-self: end;
+}
+
+.botao3pont {
+    background-image: url('imagens/3pontinhosempe.png');
+    width: 20px;
+    height: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    background-color: transparent;
+    border: 1px solid white;
+}
+
+.fundo3bot{
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    background-color: #dfdfdf;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.botao3bar:hover {
+    opacity: 0.8;
+    background-color: #e2e1e1;
+    border-radius: 50%;
+}
+
+.bordalogin {
+    display: grid;
+    border: 1px solid #d3d3d3;
+    width: 120px;
+    height: 32px;
+    background-color: transparent;
+    cursor: pointer;
+    border-radius: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.botaologin {
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    background-image: url('imagens/LoginYT.png');
+    width: 101px;
+    height: 21px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    cursor: pointer;
+    background-color: transparent;
+}
+
+.bordalogin:hover {
+    background-color: rgba(62, 166, 255, 0.1); 
+    border-color: transparent;
+}
+
+.video {
+    position: relative;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    max-width: 100%; 
+    background: black; 
+    border-radius: 2%;
+}
+
+.video iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+main {
+    width: 74%;
+    float: left;
+    padding: 10px;
+    padding-left: 4%;
+    box-sizing: border-box;
+}
+
+.barralateral {
+    width: 26%;
+    float: right;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  
+.todos {
+    width: 400px;
+    margin-bottom: 16px;
+    cursor: pointer;
+}
+
+.todos img{
+    width: 100%;
+    height: auto;
+    margin-bottom: 16px;
+    display: block;
+}
+
+  .miniatura {
+    display: flex;
+    margin-bottom: 16px;
+    cursor: pointer;
+    position: relative;
+    align-items: flex-start;
+  }
+  
+  .videolat img {
+    width: 168px;
+    height: 94px;
+    border-radius: 8px;
+    object-fit: cover;
+    margin-right: 8px;
+  }
+
+  .videolat {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+    width: 100%;
+    margin-right: 15%;
+  }
+  
+  .informacoesvid {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    flex: 1;
+  }
+  
+  .titulolateral {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    margin: 0 0 4px;
+    max-width: 200px;
+  }
+  
+  .canallateral {
+    color: #606060;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: 12px;
+    margin: 0;
+  }
+
+  .botao3pont2 {
+    background-image: url('imagens/3pontinhosempe.png');
+    width: 10px;
+    height: 10px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    background-color: transparent;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+}
+
+  .containerprincipal {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    float: none;
+  }
+
+  .titulo {
+    margin-left: 4%;
+    margin-bottom: 0.5%;
+}
+
+.fotocanal {
+    background-image: url('imagens/canal.png');
+    width: 185px;
+    height: 55px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    margin-left: 4%;
+    margin-right: 35px;
+    cursor: pointer;
+    background-color: transparent;
+    border: 1px solid white;
+    padding: 0;
+}
+
+.inscrever {
+    position: absolute;
+    margin-top: 7px;
+    background-color: black;
+    color: white;
+    font-weight: bold;
+    width: 140px;
+    height: 45px;
+    border: none;
+    border-radius: 45px;
+    font-size: medium;
+}
+
+.inscrever:hover {
+    opacity: 0.8;
+}
+
+.botlikeetc {
+    background-image: url('imagens/likeeetc.png');
+    width: 550px;
+    height: 35px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    margin-left: 29%;
+    margin-top: 15px;
+    cursor: pointer;
+    background-color: transparent;
+    position: absolute;
+}
+
+.descricao {
+    background-image: url('imagens/descricao.png');
+    width: 250px;
+    height: 85px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    margin-left: 5.2%;
+    margin-top: 35px;
+    cursor: pointer;
+    background-color: transparent;
+    position: relative;
+    opacity: 0.85;
+}
+
+.seccomentarios {
+    margin-left: 4%;
+}
+
+.ordenar {
+    display: flex;
+    background-image: url('imagens/ordenar.png');
+    width: 120px;
+    height: 15px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    margin-left: 11%;
+    margin-top: -2%;
+    cursor: pointer;
+    position: relative;
+    opacity: 0.9;
+}
+
+.centralizar {
+    display: flex;
+    margin-left: 4%;
+}
+
+.comentar {
+    margin-left: 1%;
+    border: none;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    font-size: small;
+    outline: none;
+    border-bottom: 1px solid #606060;
+    width: 95%;
+    max-width: 95%;
+    height: 25px;
+    position: relative;
+    margin-top: 1%;
+}
+
+.comentar:hover {
+    opacity: 0.9;
+}
+
+.logincoment {
+    background-image: url('imagens/logincoments.png');
+    width: 40px;
+    height: 40px;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    border: none;
+    margin-top: 15px;
+    cursor: pointer;
+    position: relative;
+}

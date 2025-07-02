@@ -1,0 +1,67 @@
+body {
+  background-image: url("imagens/tech3.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-family: 'Segoe UI', sans-serif;
+  color: rgb(203, 248, 238);
+  text-align: center;
+  padding-top: 100px;
+  margin: 0;
+  padding: 0;
+  line-height: 1.6;
+}
+  
+header, section {
+    padding: 2rem;
+    max-width: 1000px;
+    margin: auto;
+}
+  
+h1, h2, h3 {
+    color: beige;
+    margin-bottom: 1rem;
+}
+  
+input, select, textarea {
+    padding: 0.8rem;
+    width: 100%;
+    margin-bottom: 1rem;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    background-color: #1e293b;
+    color: aquamarine;
+}
+
+input:focus {
+    border-color: aliceblue;
+    outline: none;
+}
+  
+button {
+    background-color: rgb(29, 36, 80);
+    color: rgb(255, 255, 255);
+    border: #ffffff;
+    padding: 0.8rem 1.2rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+  
+button:hover {
+    background-color: #1e293b;
+}
+  
+@media (max-width: 768px) {
+    body {
+      padding: 1rem;
+    }
+    section {
+      padding: 1rem;
+    }
+    img {
+      width: 100%;
+      height: auto;
+    }
+}
+  

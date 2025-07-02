@@ -1,0 +1,350 @@
+:root {
+  --cor-vermelho: #ec2c3c;
+  --cor-preto: #1d1d1d;
+  --cor-branco: #ffffff;
+  --fonte-principal: 'Segoe UI', sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--fonte-principal);
+  background-color: var(--cor-preto);
+  color: var(--cor-branco);
+  scroll-behavior: smooth;
+  transition: background-color 0.5s, color 0.5s;
+  position: relative;
+}
+
+.hero {
+  background-image: url('Imagens/fundo-header.jpg');
+  background-size: cover;
+  background-position: center;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  z-index: 0;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  color: var(--cor-branco);
+}
+
+.foto-perfil {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  object-fit: center;
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px 10px rgba(0,0,0,0.6);
+}
+
+.foto-perfil:hover {
+  transform: scale(1.07);
+  transition: 0.5s;
+  cursor: pointer;
+}
+
+.hero h1 {
+  font-size: 3rem;
+  color: var(--cor-vermelho);
+}
+
+.hero p {
+  font-size: 1.5rem;
+  margin: 10px 0 20px;
+}
+
+.btn-destaque {
+  background-color: var(--cor-vermelho);
+  color: var(--cor-branco);
+  padding: 10px 20px;
+  border: none;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 5px;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.btn-destaque:hover {
+  background-color: #b32432;
+}
+
+.botaodestaque {
+  background-color: var(--cor-vermelho);
+  color: var(--cor-branco);
+  padding: 10px 20px;
+  border: none;
+  text-decoration: none;
+  font-weight: bold;
+  border-radius: 5px;
+  transition: 0.3s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.botaodestaque::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background-color: var(--cor-branco);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.botaodestaque:hover::after {
+  width: 50%;
+}
+
+.botaodestaque:hover {
+  background-color: #b32432;
+  box-shadow: 0 0 15px var(--cor-preto);
+  background-position: right;
+}
+
+#projetos {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+#projetos h2 {
+  color: var(--cor-vermelho);
+  margin-bottom: 30px;
+}
+
+.grid-projetos {
+  display: grid;
+  gap: 30px;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  max-width: 1000px;
+  margin: auto;
+}
+
+.card-projeto {
+  background-color: #2a2a2a;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.card-projeto img {
+  width: 100%;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.card-projeto h3 {
+  margin-bottom: 10px;
+}
+
+.card-projeto a {
+  color: var(--cor-vermelho);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.card-projeto a:hover {
+  text-decoration: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+.ver {
+  position: relative;
+  padding: 8px 16px;
+  color: var(--cor-vermelho);
+  border: 2px solid var(--cor-vermelho);
+  background-color: transparent;
+  text-decoration: none;
+  font-weight: bold;
+  overflow: hidden;
+  transition: color 0.4s;
+}
+
+.ver::after {
+  
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: all 0.3s ease;
+}
+
+.ver:hover::after {
+  content: " →";
+  opacity: 1;
+  transform: translateX(5px);
+}
+
+.ver::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 100%;
+  background-color: var(--cor-vermelho);
+  z-index: -1;
+  transition: width 0.4s ease-in-out;
+}
+
+.ver:hover::before {
+  width: 100%;
+}
+
+.ver:hover {
+  border-color: var(--cor-vermelho);
+  background-color: rgba(236, 44, 60, 0.1);
+  color: white;
+  text-decoration: none;
+}
+
+.contato {
+  padding: 60px 20px;
+  text-align: center;
+  background-color: #111;
+}
+
+.contato h2 {
+  color: var(--cor-vermelho);
+  margin-bottom: 10px;
+}
+
+.contato a.btn-destaque {
+  margin-top: 20px;
+  display: inline-block;
+}
+
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 0.9rem;
+  background-color: #000;
+}
+
+/* Tema Claro */
+body.light-mode {
+  background-color: var(--cor-branco);
+  color: var(--cor-preto);
+}
+
+body.light-mode .hero {
+  background-image: none;
+  background-color: #f0f0f0;
+}
+
+body.light-mode .card-projeto {
+  background-color: #f5f5f5;
+  color: var(--cor-preto);
+}
+
+body.light-mode .contato, body.light-mode footer {
+  background-color: #ddd;
+  color: var(--cor-preto);
+}
+
+body.light-mode .btn-destaque {
+  background-color: var(--cor-#b32432);
+  color: var(--cor-branco);
+}
+
+body.light-mode .btn-destaque:hover {
+  background-color: #b32432;
+}
+
+body.light-mode .tecnologias {
+  background-color: #f5f5f5;
+  color: var(--cor-preto);
+}
+
+body.light-mode .tecnologias li {
+  background-color: #ffffff;
+  color: #000;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.fade-in.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-destaque {
+  transition: 0.8s ease-in-out;
+}
+
+ul {
+  list-style-type: none;
+}
+
+.tecnologias {
+  padding: 20px 20px;
+  text-align: center;
+  background-color: transparent;
+  color: inherit;
+}
+
+.tecnologias h2 {
+  font-size: 2rem;
+  margin-bottom: 30px;
+  color: var(--titulo, #ec2c3c);
+  cursor: default;
+}
+
+.tecnologias h2:hover {
+  transform: scale(1.1);
+  transition: transform 0.5s;
+}
+
+.tecnologias ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+.tecnologias li {
+  background-color: #2a2a2a;
+  color: #fff;
+  padding: 15px 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  font-weight: bold;
+  transition: transform 0.3s;
+  cursor: pointer;
+}
+
+.tecnologias li:hover {
+  transform: scale(1.15);
+  transform: translateY(-5px);
+}
