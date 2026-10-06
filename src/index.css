@@ -21,9 +21,7 @@ body {
 }
 
 .hero {
-  background-image: url('Imagens/fundo-header.jpg');
-  background-size: cover;
-  background-position: center;
+  background-color: #101010;
   height: 100vh;
   display: flex;
   align-items: center;
@@ -50,7 +48,7 @@ body {
   width: 170px;
   height: 170px;
   border-radius: 50%;
-  object-fit: center;
+  object-fit: cover;
   margin-bottom: 20px;
   box-shadow: 0 0 15px 10px rgba(0,0,0,0.6);
 }
@@ -243,41 +241,40 @@ footer {
 }
 
 /* Tema Claro */
-body.light-mode {
+html.light-mode body {
   background-color: var(--cor-branco);
   color: var(--cor-preto);
 }
 
-body.light-mode .hero {
-  background-image: none;
+html.light-mode body .hero {
   background-color: #f0f0f0;
 }
 
-body.light-mode .card-projeto {
+html.light-mode body .card-projeto {
   background-color: #f5f5f5;
   color: var(--cor-preto);
 }
 
-body.light-mode .contato, body.light-mode footer {
+html.light-mode body .contato, html.light-mode body footer {
   background-color: #ddd;
   color: var(--cor-preto);
 }
 
-body.light-mode .btn-destaque {
-  background-color: var(--cor-#b32432);
+html.light-mode body .btn-destaque {
+  background-color: #b32432;
   color: var(--cor-branco);
 }
 
-body.light-mode .btn-destaque:hover {
+html.light-mode body .btn-destaque:hover {
   background-color: #b32432;
 }
 
-body.light-mode .tecnologias {
+html.light-mode body .tecnologias {
   background-color: #f5f5f5;
   color: var(--cor-preto);
 }
 
-body.light-mode .tecnologias li {
+html.light-mode body .tecnologias li {
   background-color: #ffffff;
   color: #000;
 }
@@ -345,6 +342,11 @@ ul {
 }
 
 .tecnologias li:hover {
-  transform: scale(1.15);
   transform: translateY(-5px);
+}
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
 }
