@@ -10,6 +10,7 @@ export const perfil = {
   nome: 'Thiago Soares',
   email: 'thiagoosoa0201@gmail.com',
   github: 'https://github.com/ThiagoOlSoa',
+  linkedin: 'https://www.linkedin.com/in/thiagoolsoa/',
   instagram: 'https://instagram.com/thiagoolsoa',
   instagramUser: '@thiagoolsoa',
   repositorio: 'https://github.com/ThiagoOlSoa/Meu_Portfolio',

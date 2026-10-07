@@ -164,8 +164,8 @@ function Tecnologias() {
 
 function PrimeirosPassos() {
   return (
-    <Section id="primeiros-passos" titulo="Primeiros passos">
-      <p className="section-intro">Exercícios de HTML e CSS que fiz ao começar.</p>
+    <Section id="estudos" titulo="Estudos">
+      <p className="section-intro">Projetos de estudo, anteriores ao estágio: exercícios de HTML e CSS.</p>
       <ul className="plain-list">
         {primeirosPassos.map((p) => (
           <li key={p.nome}>
@@ -203,6 +203,14 @@ function Contato() {
             <dd>
               <a className="link" href={perfil.github} target="_blank" rel="noreferrer">
                 ThiagoOlSoa
+              </a>
+            </dd>
+          </div>
+          <div className="def">
+            <dt>LinkedIn</dt>
+            <dd>
+              <a className="link" href={perfil.linkedin} target="_blank" rel="noreferrer">
+                thiagoolsoa
               </a>
             </dd>
           </div>
