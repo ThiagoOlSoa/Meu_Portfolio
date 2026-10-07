@@ -11,6 +11,7 @@
   --accent: #a91520;
   --accent-ink: #ffffff;
   --gold: #d69b28;
+  --gold-raio: #e8b84a;
   --ok: #17663a;
   --warn: #8a5a00;
 
@@ -174,7 +175,7 @@ a {
   width: 22px;
   height: 28px;
   background: var(--gold);
-  clip-path: polygon(57% 0, 100% 0, 71% 39%, 96% 39%, 27% 100%, 46% 54%, 14% 54%);
+  clip-path: polygon(75% 0, 100% 0, 79.5% 26%, 98% 26%, 69% 52.4%, 86.5% 52.4%, 20% 100%, 46.5% 64.4%, 28% 64.4%, 55% 37.2%, 36.5% 37.2%);
   opacity: 0;
   pointer-events: none;
 }
@@ -235,7 +236,7 @@ a {
   width: 26px;
   height: 26px;
   background: var(--accent);
-  color: #fff;
+  color: var(--gold-raio);
   border-radius: var(--r-sm);
 }
 .nav {
@@ -305,7 +306,7 @@ a {
   position: relative;
   justify-self: center;
   width: min(100%, 420px);
-  aspect-ratio: 1 / 1.1;
+  aspect-ratio: 4 / 5;
 }
 .hero-bolt {
   position: absolute;
@@ -321,7 +322,7 @@ a {
 }
 .bolt-line {
   fill: none;
-  stroke: var(--gold);
+  stroke: var(--gold-raio);
   stroke-width: 4;
   stroke-linejoin: round;
   stroke-dasharray: 1;
@@ -355,7 +356,7 @@ a {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 25%;
+  object-position: 50% 18%;
   border-radius: var(--r-panel);
   box-shadow: var(--shadow-portrait);
   transform: rotate(-2deg);
@@ -884,6 +885,13 @@ a {
 }
 
 @media (max-width: 520px) {
+  .topbar-in {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+  .wordmark {
+    white-space: nowrap;
+  }
   .nav-link {
     padding: 8px 6px;
   }

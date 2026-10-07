@@ -1,7 +1,7 @@
 import { perfil } from '../content'
 import { irParaSecao, irParaTopo } from '../router'
 
-export const CAMINHO_RAIO = 'M230 0 L400 0 L286 196 L384 196 L108 500 L186 268 L56 268 Z'
+export const CAMINHO_RAIO = 'M300 0 L400 0 L318 130 L392 130 L276 262 L346 262 L80 500 L186 322 L112 322 L220 186 L146 186 Z'
 
 function LinkSecao({ id, children }) {
   return (

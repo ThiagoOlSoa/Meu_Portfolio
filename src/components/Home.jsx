@@ -30,9 +30,9 @@ function Retrato() {
       <img
         className="hero-photo"
         src={asset('thiago.jpg')}
-        alt="Thiago Soares sorrindo, em frente a uma cachoeira"
-        width="1000"
-        height="979"
+        alt="Thiago Soares, de camisa preta, em um fundo escuro com luzes vermelhas e douradas"
+        width="900"
+        height="1316"
         fetchPriority="high"
       />
     </div>
