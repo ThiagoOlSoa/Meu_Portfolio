@@ -138,22 +138,71 @@ a {
   border: 0;
   border-radius: var(--r-btn);
   cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.15s ease;
 }
-.btn:hover {
+.btn:hover,
+.btn:focus-visible {
   transform: translateY(-2px);
 }
+/* 1. Risco dourado que cruza o botão */
+.btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 14%;
+  background: var(--gold);
+  transform: translateX(-200%) skewX(-24deg);
+  opacity: 0.9;
+  pointer-events: none;
+  z-index: -1;
+}
+.btn:hover::after,
+.btn:focus-visible::after {
+  animation: risco 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* 2. Raio que estala no clique */
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 22px;
+  height: 28px;
+  background: var(--gold);
+  clip-path: polygon(57% 0, 100% 0, 71% 39%, 96% 39%, 27% 100%, 46% 54%, 14% 54%);
+  opacity: 0;
+  pointer-events: none;
+}
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
+.btn:active::before {
+  animation: estalo 0.28s ease-out;
+}
 
-.link {
+.link,
+.feature-cta {
   color: var(--ink);
   font-weight: 600;
-  text-decoration: underline;
-  text-decoration-color: var(--gold);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
+  text-decoration: none;
+  padding-bottom: 3px;
+  background-image: linear-gradient(var(--gold), var(--gold)), linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 100% 2px, 0 2px;
+  transition: background-size 0.22s cubic-bezier(0.2, 0.9, 0.2, 1);
 }
-.link:hover {
-  text-decoration-color: var(--accent);
+/* 3. Linha de velocidade: o sublinhado vermelho dispara por cima do dourado */
+.link:hover,
+.link:focus-visible,
+.feature:hover .feature-cta,
+.feature:focus-visible .feature-cta {
+  background-size: 100% 2px, 100% 2px;
 }
 
 /* Topo ------------------------------------------------------------------ */
@@ -207,8 +256,17 @@ a {
   cursor: pointer;
   border-radius: var(--r-sm);
 }
-.nav-link:hover {
+.nav-link {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-position: 10px calc(100% - 4px);
+  background-size: 0 2px;
+  transition: background-size 0.2s cubic-bezier(0.2, 0.9, 0.2, 1), color 0.15s ease;
+}
+.nav-link:hover,
+.nav-link:focus-visible {
   color: var(--ink);
+  background-size: calc(100% - 20px) 2px;
 }
 
 /* Hero ------------------------------------------------------------------ */
@@ -332,6 +390,57 @@ a {
   }
 }
 
+@keyframes risco {
+  from {
+    transform: translateX(-200%) skewX(-24deg);
+  }
+  to {
+    transform: translateX(800%) skewX(-24deg);
+  }
+}
+@keyframes estalo {
+  0% {
+    opacity: 1;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+/* 4. Troca de tema: risco diagonal cruza a tela */
+.faisca {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  overflow: hidden;
+}
+.faisca::before,
+.faisca::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  transform: translateX(-30vw) skewX(-24deg);
+  animation: faisca-cruza 0.38s cubic-bezier(0.5, 0, 0.2, 1) forwards;
+}
+.faisca::before {
+  width: 7vw;
+  background: var(--gold);
+  animation-delay: 0.04s;
+}
+.faisca::after {
+  width: 11vw;
+  background: var(--accent);
+}
+@keyframes faisca-cruza {
+  to {
+    transform: translateX(130vw) skewX(-24deg);
+  }
+}
+
 /* Seções ---------------------------------------------------------------- */
 .section {
   padding: 72px 0;
@@ -421,10 +530,6 @@ a {
   display: inline-block;
   margin-top: 24px;
   font-weight: 650;
-  text-decoration: underline;
-  text-decoration-color: var(--gold);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
 }
 .feature-visual {
   align-self: center;
@@ -797,10 +902,17 @@ a {
   }
   .bolt-fill,
   .bolt-line,
-  .trail {
-    animation: none;
+  .trail,
+  .btn::before,
+  .btn::after,
+  .faisca::before,
+  .faisca::after {
+    animation: none !important;
   }
-  .btn {
+  .btn,
+  .link,
+  .feature-cta,
+  .nav-link {
     transition: none;
   }
 }

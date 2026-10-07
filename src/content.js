@@ -126,7 +126,7 @@ export const projetos = [
       {
         titulo: 'Falha de leitura é um caso previsto',
         texto:
-          'PDF com texto, Word e imagem têm tratamentos diferentes: PDF.js e OCR com Tesseract. PDF escaneado sem texto não passa por OCR direto, então o sistema avisa e pede as páginas como imagem ou o preenchimento manual.',
+          'PDF com texto, Word e imagem têm tratamentos diferentes, e imagem passa por OCR. PDF escaneado sem texto não passa por OCR direto, então o sistema avisa e pede as páginas como imagem ou o preenchimento manual.',
       },
       {
         titulo: 'Cada pessoa vê o que precisa da agenda',
