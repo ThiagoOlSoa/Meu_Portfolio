@@ -141,8 +141,8 @@ export const projetos = [
     capturas: [],
   },
   {
-    id: 'mapeamentos',
-    nome: 'Central de Mapeamentos',
+    id: 'processos',
+    nome: 'Central de Processos',
     status: 'teste',
     statusTexto: 'Em teste',
     linha:
@@ -188,7 +188,7 @@ export const ecossistema = {
   modulos: [
     { nome: 'Comunicados', estado: 'Em teste' },
     { nome: 'Banco de Talentos', estado: 'Em teste' },
-    { nome: 'Central de Mapeamentos', estado: 'Em teste' },
+    { nome: 'Central de Processos', estado: 'Em teste' },
   ],
 }
 
@@ -207,7 +207,7 @@ export const tecnologias = [
   { onde: 'GRM', itens: 'React, Vite, React Router, Supabase (autenticação, PostgreSQL, tempo real), ExcelJS, PDF.js' },
   { onde: 'Comunicados', itens: 'Python, SQLite, SMTP e IMAP, HTML, CSS e JavaScript' },
   { onde: 'Banco de Talentos', itens: 'React, TypeScript, Node.js, Express, PostgreSQL, PDF.js, Tesseract.js' },
-  { onde: 'Central de Mapeamentos', itens: 'React, TypeScript, Node.js, Express, SQLite' },
+  { onde: 'Central de Processos', itens: 'React, TypeScript, Node.js, Express, SQLite' },
   { onde: 'Faculdade', itens: 'C, Java, Python, SQL (MySQL e SQLite), estruturas de dados' },
   { onde: 'Rotina de trabalho', itens: 'Git e GitHub, Scrum' },
 ]
