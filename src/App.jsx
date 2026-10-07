@@ -1,24 +1,32 @@
-import Hero from './components/Hero'
-import Projetos from './components/Projetos'
-import Tecnologias from './components/Tecnologias'
-import Contato from './components/Contato'
-import ThemeToggle from './components/ThemeToggle'
-import { useFadeIn, useTema } from './hooks'
+import { useEffect } from 'react'
+import { projetos } from './content'
+import { consumirRolagem, useRoute } from './router'
+import { useTema } from './hooks'
+import { Footer, Header } from './components/Layout'
+import Home from './components/Home'
+import Case from './components/Case'
 
 export default function App() {
-  const [claro, alternarTema] = useTema()
-  useFadeIn()
+  const rota = useRoute()
+  const [tema, alternarTema] = useTema()
+  const projeto = rota.name === 'projeto' ? projetos.find((p) => p.id === rota.id) : null
+
+  useEffect(() => {
+    document.title = projeto
+      ? `${projeto.nome} | Thiago Soares`
+      : 'Thiago Soares | Desenvolvedor full stack'
+    if (projeto) window.scrollTo(0, 0)
+    else if (!consumirRolagem()) window.scrollTo(0, 0)
+  }, [projeto])
 
   return (
     <>
-      <ThemeToggle claro={claro} onToggle={alternarTema} />
-      <Hero />
-      <Projetos />
-      <Tecnologias />
-      <Contato />
-      <footer>
-        <p>&copy; {new Date().getFullYear()} Thiago Soares. Todos os direitos reservados.</p>
-      </footer>
+      <a className="skip" href="#conteudo">
+        Ir para o conteúdo
+      </a>
+      <Header tema={tema} onAlternarTema={alternarTema} />
+      <main id="conteudo">{projeto ? <Case projeto={projeto} /> : <Home />}</main>
+      <Footer />
     </>
   )
 }

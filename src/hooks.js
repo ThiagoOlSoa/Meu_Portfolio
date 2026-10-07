@@ -1,34 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 export function useTema() {
-  const [claro, setClaro] = useState(() => {
+  const [tema, setTema] = useState(() => document.documentElement.dataset.theme || 'light')
+
+  const alternar = () => {
+    const proximo = tema === 'dark' ? 'light' : 'dark'
+    document.documentElement.dataset.theme = proximo
     try {
-      return localStorage.getItem('theme') === 'light'
+      localStorage.setItem('theme', proximo)
     } catch {
-      return false
+      // sem armazenamento disponível: o tema vale só nesta visita
     }
-  })
+    setTema(proximo)
+  }
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('light-mode', claro)
-    try {
-      localStorage.setItem('theme', claro ? 'light' : 'dark')
-    } catch {}
-  }, [claro])
-
-  return [claro, () => setClaro((v) => !v)]
-}
-
-export function useFadeIn() {
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => {
-          if (e.isIntersecting) e.target.classList.add('visible')
-        }),
-      { threshold: 0.1 },
-    )
-    document.querySelectorAll('.fade-in').forEach((el) => observer.observe(el))
-    return () => observer.disconnect()
-  }, [])
+  return [tema, alternar]
 }

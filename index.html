@@ -3,14 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Thiago Soares - Portfólio</title>
+    <title>Thiago Soares | Desenvolvedor full stack</title>
+    <meta
+      name="description"
+      content="Portfólio de Thiago Soares, desenvolvedor full stack em Salvador. Sistemas internos de gestão, recrutamento, comunicação por e-mail e base de conhecimento."
+    />
+    <meta property="og:title" content="Thiago Soares | Desenvolvedor full stack" />
+    <meta
+      property="og:description"
+      content="Sistemas internos de gestão, recrutamento, comunicação por e-mail e base de conhecimento."
+    />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#ecebea" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <script>
-      // Aplica o tema salvo antes da pintura para evitar flash
+      // Define o tema antes da primeira pintura, para não piscar
       try {
-        if (localStorage.getItem('theme') === 'light') {
-          document.documentElement.classList.add('light-mode')
+        var t = localStorage.getItem('theme')
+        if (t !== 'light' && t !== 'dark') {
+          t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
         }
-      } catch (e) {}
+        document.documentElement.dataset.theme = t
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light'
+      }
     </script>
   </head>
   <body>
