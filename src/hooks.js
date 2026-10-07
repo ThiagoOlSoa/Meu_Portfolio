@@ -1,7 +1,10 @@
 import { useState } from 'react'
 
+const temaDoSistema = () =>
+  window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+
 export function useTema() {
-  const [tema, setTema] = useState(() => document.documentElement.dataset.theme || 'light')
+  const [tema, setTema] = useState(() => document.documentElement.dataset.theme || temaDoSistema())
 
   const alternar = () => {
     const proximo = tema === 'dark' ? 'light' : 'dark'

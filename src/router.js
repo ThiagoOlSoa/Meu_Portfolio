@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react'
 
 // Rotas por hash (#/projeto/grm), porque o GitHub Pages não faz fallback de rotas.
+let hashAtual = window.location.hash
+const ouvintes = new Set()
+
+function ir(hash) {
+  hashAtual = hash
+  try {
+    window.location.hash = hash
+  } catch {
+    /* ambientes que bloqueiam o hash (prévia incorporada) usam só o estado interno */
+  }
+  ouvintes.forEach((f) => f())
+}
+
 function ler() {
-  const [a, b] = window.location.hash.replace(/^#\/?/, '').split('/')
+  const [a, b] = hashAtual.replace(/^#\/?/, '').split('/')
   if (a === 'projeto' && b) return { name: 'projeto', id: b }
   return { name: 'home' }
 }
@@ -11,8 +24,24 @@ export function useRoute() {
   const [rota, setRota] = useState(ler)
   useEffect(() => {
     const aoMudar = () => setRota(ler())
-    window.addEventListener('hashchange', aoMudar)
-    return () => window.removeEventListener('hashchange', aoMudar)
+    const aoHash = () => {
+      hashAtual = window.location.hash
+      aoMudar()
+    }
+    const aoClicar = (e) => {
+      const a = e.target.closest && e.target.closest('a[href^="#/"]')
+      if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey) return
+      e.preventDefault()
+      ir(a.getAttribute('href'))
+    }
+    ouvintes.add(aoMudar)
+    window.addEventListener('hashchange', aoHash)
+    document.addEventListener('click', aoClicar)
+    return () => {
+      ouvintes.delete(aoMudar)
+      window.removeEventListener('hashchange', aoHash)
+      document.removeEventListener('click', aoClicar)
+    }
   }, [])
   return rota
 }
@@ -25,7 +54,7 @@ let pendente = null
 export function irParaSecao(id) {
   pendente = id
   if (ler().name === 'home') consumirRolagem()
-  else window.location.hash = '#/'
+  else ir('#/')
 }
 
 export function consumirRolagem() {
@@ -41,5 +70,5 @@ export function consumirRolagem() {
 export function irParaTopo() {
   pendente = null
   if (ler().name === 'home') window.scrollTo(0, 0)
-  else window.location.hash = '#/'
+  else ir('#/')
 }

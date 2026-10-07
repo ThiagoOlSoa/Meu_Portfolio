@@ -1,29 +1,7 @@
-import { asset, ecossistema, projetos } from '../content'
+import { asset, projetos } from '../content'
 import { caminhoProjeto, irParaSecao } from '../router'
+import Ecossistema from './Ecossistema'
 import { Section } from './Layout'
-
-// Diagrama real da arquitetura: o GRM como porta de entrada dos outros sistemas.
-function Ecossistema() {
-  return (
-    <figure className="eco">
-      <div className="eco-map">
-        <div className="eco-grm">
-          <strong>GRM</strong>
-          <span>Porta de entrada</span>
-        </div>
-        <ul className="eco-list">
-          {ecossistema.modulos.map((m) => (
-            <li className="eco-item" key={m.nome}>
-              <strong>{m.nome}</strong>
-              <span>{m.estado}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <figcaption>{ecossistema.legenda}</figcaption>
-    </figure>
-  )
-}
 
 function Capturas({ itens }) {
   if (!itens.length) return null

@@ -6,9 +6,38 @@ import {
   projetos,
   sobre,
   tecnologias,
+  trajetoria,
 } from '../content'
 import { caminhoProjeto, irParaSecao } from '../router'
-import { Section } from './Layout'
+import { MapaEcossistema } from './Ecossistema'
+import { CAMINHO_RAIO, Section } from './Layout'
+
+function Retrato() {
+  return (
+    <div className="hero-art">
+      <svg className="hero-bolt" viewBox="0 0 400 500" aria-hidden="true" focusable="false">
+        <path className="bolt-fill" d={CAMINHO_RAIO} />
+        <path
+          className="bolt-line"
+          d={CAMINHO_RAIO}
+          pathLength="1"
+          transform="translate(22 -18)"
+        />
+      </svg>
+      <span className="trail trail-1" aria-hidden="true" />
+      <span className="trail trail-2" aria-hidden="true" />
+      <span className="trail trail-3" aria-hidden="true" />
+      <img
+        className="hero-photo"
+        src={asset('thiago.jpg')}
+        alt="Thiago Soares sorrindo, em frente a uma cachoeira"
+        width="1000"
+        height="979"
+        fetchPriority="high"
+      />
+    </div>
+  )
+}
 
 function Hero() {
   return (
@@ -45,33 +74,42 @@ function Hero() {
             </a>
           </div>
         </div>
-        <div className="hero-art">
-          <div className="hero-slab" aria-hidden="true" />
-          <img
-            className="hero-photo"
-            src={asset('thiago.jpg')}
-            alt="Thiago Soares sorrindo, em frente a uma cachoeira"
-            width="1000"
-            height="979"
-            fetchPriority="high"
-          />
-        </div>
+        <Retrato />
       </div>
     </section>
   )
 }
 
+function Destaque({ projeto }) {
+  return (
+    <a className="feature" href={caminhoProjeto(projeto.id)}>
+      <div className="feature-text">
+        <h3 className="feature-name">{projeto.nome}</h3>
+        <p className={`feature-status status-${projeto.status}`}>{projeto.statusTexto}</p>
+        <p className="feature-desc">{projeto.linha}</p>
+        <span className="feature-cta">Ver o projeto</span>
+      </div>
+      <div className="feature-visual" aria-hidden="true">
+        <MapaEcossistema />
+      </div>
+    </a>
+  )
+}
+
 function Projetos() {
+  const destaque = projetos.find((p) => p.destaque)
+  const demais = projetos.filter((p) => !p.destaque)
   return (
     <Section id="projetos" titulo="Projetos">
       <p className="section-intro">
         Quatro sistemas que desenvolvo no estágio. O GRM está em uso; os outros três estão em
         teste e sendo conectados a ele. Nenhum dado real aparece aqui.
       </p>
+      <Destaque projeto={destaque} />
       <ul className="rows">
-        {projetos.map((p) => (
+        {demais.map((p) => (
           <li key={p.id}>
-            <a className={`row${p.destaque ? ' row-lead' : ''}`} href={caminhoProjeto(p.id)}>
+            <a className="row" href={caminhoProjeto(p.id)}>
               <span className="row-name">{p.nome}</span>
               <span className={`row-status status-${p.status}`}>{p.statusTexto}</span>
               <span className="row-desc">{p.linha}</span>
@@ -91,6 +129,14 @@ function Sobre() {
           <p key={p}>{p}</p>
         ))}
       </div>
+      <dl className="defs defs-path">
+        {trajetoria.map((t) => (
+          <div className="def" key={t.quando}>
+            <dt>{t.quando}</dt>
+            <dd>{t.texto}</dd>
+          </div>
+        ))}
+      </dl>
     </Section>
   )
 }
@@ -137,38 +183,39 @@ function PrimeirosPassos() {
 function Contato() {
   return (
     <Section id="contato" titulo="Contato">
-      <p className="contact-lead">
-        Aberto a freelas de sites e sistemas web. O jeito mais rápido de falar comigo é por e-mail.
-      </p>
-      <a className="btn" href={`mailto:${perfil.email}`}>
-        Enviar e-mail
-      </a>
-      <dl className="defs defs-contact">
-        <div className="def">
-          <dt>E-mail</dt>
-          <dd>
-            <a className="link" href={`mailto:${perfil.email}`}>
-              {perfil.email}
-            </a>
-          </dd>
+      <div className="contact-panel">
+        <div>
+          <p className="contact-title">Precisa de um site ou de um sistema web?</p>
+          <p className="contact-lead">
+            Aberto a freelas. O jeito mais rápido de falar comigo é por e-mail.
+          </p>
+          <a className="btn" href={`mailto:${perfil.email}`}>
+            Enviar e-mail
+          </a>
         </div>
-        <div className="def">
-          <dt>GitHub</dt>
-          <dd>
-            <a className="link" href={perfil.github} target="_blank" rel="noreferrer">
-              ThiagoOlSoa
-            </a>
-          </dd>
-        </div>
-        <div className="def">
-          <dt>Instagram</dt>
-          <dd>
-            <a className="link" href={perfil.instagram} target="_blank" rel="noreferrer">
-              {perfil.instagramUser}
-            </a>
-          </dd>
-        </div>
-      </dl>
+        <dl className="defs defs-contact">
+          <div className="def">
+            <dt>E-mail</dt>
+            <dd>{perfil.email}</dd>
+          </div>
+          <div className="def">
+            <dt>GitHub</dt>
+            <dd>
+              <a className="link" href={perfil.github} target="_blank" rel="noreferrer">
+                ThiagoOlSoa
+              </a>
+            </dd>
+          </div>
+          <div className="def">
+            <dt>Instagram</dt>
+            <dd>
+              <a className="link" href={perfil.instagram} target="_blank" rel="noreferrer">
+                {perfil.instagramUser}
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </div>
     </Section>
   )
 }

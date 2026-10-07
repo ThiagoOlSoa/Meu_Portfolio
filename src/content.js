@@ -2,7 +2,9 @@
 // Para adicionar capturas de tela de um projeto, coloque as imagens em public/capturas/
 // e liste em `capturas`: { arquivo: 'grm-solicitacoes.png', legenda: '...', alt: '...' }
 
-export const asset = (path) => `${import.meta.env.BASE_URL}${path}`
+// A prévia em arquivo único injeta os arquivos em window.__ASSETS__; no site publicado vale o base do Vite.
+const embutidos = (typeof window !== 'undefined' && window.__ASSETS__) || {}
+export const asset = (path) => embutidos[path] ?? `${import.meta.env.BASE_URL}${path}`
 
 export const perfil = {
   nome: 'Thiago Soares',
@@ -191,8 +193,14 @@ export const ecossistema = {
 }
 
 export const sobre = [
-  'Estudo Análise e Desenvolvimento de Sistemas na UniJorge e desenvolvo sistemas internos no meu estágio. Gosto da parte que costuma ficar escondida: regras de acesso, fluxos de aprovação, o que acontece quando um envio falha.',
+  'Gosto da parte do software que costuma ficar escondida: regras de acesso, fluxos de aprovação, o que acontece quando um envio falha.',
   'Uso assistentes de IA no desenvolvimento, como ferramenta de trabalho. Cada sistema neste site traz o estado real em que está.',
+]
+
+export const trajetoria = [
+  { quando: 'Agora', texto: 'Estágio em desenvolvimento de sistemas internos, em uma empresa de serviços contábeis.' },
+  { quando: 'Formação', texto: 'Análise e Desenvolvimento de Sistemas, UniJorge.' },
+  { quando: 'Freelas', texto: 'Aberto a sites e sistemas web sob medida.' },
 ]
 
 export const tecnologias = [

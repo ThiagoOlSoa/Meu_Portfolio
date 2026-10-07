@@ -1,6 +1,8 @@
 import { perfil } from '../content'
 import { irParaSecao, irParaTopo } from '../router'
 
+export const CAMINHO_RAIO = 'M230 0 L400 0 L286 196 L384 196 L108 500 L186 268 L56 268 Z'
+
 function LinkSecao({ id, children }) {
   return (
     <a
@@ -29,6 +31,11 @@ export function Header({ tema, onAlternarTema }) {
             irParaTopo()
           }}
         >
+          <span className="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 400 500" width="13" height="16" focusable="false">
+              <path d={CAMINHO_RAIO} fill="currentColor" />
+            </svg>
+          </span>
           {perfil.nome}
         </a>
         <nav className="nav" aria-label="Principal">
