@@ -126,7 +126,7 @@ export const projetos = [
       {
         titulo: 'Falha de leitura é um caso previsto',
         texto:
-          'PDF com texto, Word e imagem têm tratamentos diferentes: PDF.js, Mammoth e OCR com Tesseract. PDF escaneado sem texto não passa por OCR direto, então o sistema avisa e pede as páginas como imagem ou o preenchimento manual.',
+          'PDF com texto, Word e imagem têm tratamentos diferentes: PDF.js e OCR com Tesseract. PDF escaneado sem texto não passa por OCR direto, então o sistema avisa e pede as páginas como imagem ou o preenchimento manual.',
       },
       {
         titulo: 'Cada pessoa vê o que precisa da agenda',
@@ -135,7 +135,7 @@ export const projetos = [
       },
     ],
     stack:
-      'React 19, TypeScript e Vite no front. Node.js, Express e PostgreSQL no servidor. PDF.js, Mammoth e Tesseract.js para documentos, Zod para validação e Vitest nos testes.',
+      'React 19, TypeScript e Vite no front. Node.js, Express e PostgreSQL no servidor. PDF.js e Tesseract.js para documentos, Zod para validação e Vitest nos testes.',
     estado:
       'Em teste, com currículos fictícios. A leitura de documentos depende da qualidade do arquivo e pede revisão humana. A disponibilidade ainda usa só os compromissos do próprio sistema; a ligação com a agenda do GRM é uma evolução prevista.',
     capturas: [],
@@ -206,7 +206,7 @@ export const trajetoria = [
 export const tecnologias = [
   { onde: 'GRM', itens: 'React, Vite, React Router, Supabase (autenticação, PostgreSQL, tempo real), ExcelJS, PDF.js' },
   { onde: 'Comunicados', itens: 'Python, SQLite, SMTP e IMAP, HTML, CSS e JavaScript' },
-  { onde: 'Banco de Talentos', itens: 'React, TypeScript, Node.js, Express, PostgreSQL, PDF.js, Mammoth, Tesseract.js' },
+  { onde: 'Banco de Talentos', itens: 'React, TypeScript, Node.js, Express, PostgreSQL, PDF.js, Tesseract.js' },
   { onde: 'Central de Mapeamentos', itens: 'React, TypeScript, Node.js, Express, SQLite' },
   { onde: 'Faculdade', itens: 'C, Java, Python, SQL (MySQL e SQLite), estruturas de dados' },
   { onde: 'Rotina de trabalho', itens: 'Git e GitHub, Scrum' },
