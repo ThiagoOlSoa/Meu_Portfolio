@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import {
   asset,
   certificado,
@@ -12,9 +13,45 @@ import { caminhoProjeto, irParaSecao } from '../router'
 import { MapaEcossistema } from './Ecossistema'
 import { CAMINHO_RAIO, Section } from './Layout'
 
+// Efeito de velocidade: no desktop segue o mouse; no celular dispara uma vez
+// cada vez que a foto aparece na tela.
 function Retrato() {
+  const [fx, setFx] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    if (!window.matchMedia('(hover: none)').matches || !('IntersectionObserver' in window)) return
+    let timer
+    let visivel = false
+    const obs = new IntersectionObserver(
+      ([e]) => {
+        const agora = e.intersectionRatio >= 0.5
+        if (agora && !visivel) {
+          setFx(true)
+          timer = setTimeout(() => setFx(false), 1000)
+        }
+        visivel = agora
+      },
+      { threshold: [0, 0.5] },
+    )
+    obs.observe(ref.current)
+    return () => {
+      obs.disconnect()
+      clearTimeout(timer)
+    }
+  }, [])
+
+  const mouse = (valor) => (e) => {
+    if (e.pointerType === 'mouse') setFx(valor)
+  }
+
   return (
-    <div className="hero-art">
+    <div
+      className={`hero-art${fx ? ' fx' : ''}`}
+      ref={ref}
+      onPointerEnter={mouse(true)}
+      onPointerLeave={mouse(false)}
+    >
       <svg className="hero-bolt" viewBox="0 0 400 500" aria-hidden="true" focusable="false">
         <path className="bolt-fill" d={CAMINHO_RAIO} />
         <path
@@ -23,7 +60,15 @@ function Retrato() {
           pathLength="1"
           transform="translate(22 -18)"
         />
+        <path
+          className="bolt-hover"
+          d={CAMINHO_RAIO}
+          pathLength="1"
+          transform="translate(22 -18)"
+        />
       </svg>
+      <span className="eco-frame eco-2" aria-hidden="true" />
+      <span className="eco-frame eco-1" aria-hidden="true" />
       <span className="trail trail-1" aria-hidden="true" />
       <span className="trail trail-2" aria-hidden="true" />
       <span className="trail trail-3" aria-hidden="true" />

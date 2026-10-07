@@ -314,6 +314,7 @@ a {
   width: 78%;
   height: 112%;
   overflow: visible;
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .bolt-fill {
   fill: var(--accent);
@@ -335,7 +336,9 @@ a {
   height: 3px;
   background: var(--gold);
   border-radius: 2px;
-  animation: rastro 0.8s 0.5s ease-out both;
+  animation: rastro 0.8s 0.5s ease-out backwards;
+  transform-origin: right center;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 .trail-1 {
   top: 24%;
@@ -360,6 +363,88 @@ a {
   border-radius: var(--r-panel);
   box-shadow: var(--shadow-portrait);
   transform: rotate(-2deg);
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Efeito da foto (hover no desktop; uma vez ao aparecer no celular) --------- */
+.eco-frame {
+  position: absolute;
+  inset: 0;
+  border: 2px solid var(--gold-raio);
+  border-radius: var(--r-panel);
+  transform: rotate(-2deg);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease;
+}
+.eco-2 {
+  border-color: var(--accent);
+}
+.bolt-hover {
+  fill: none;
+  stroke: var(--gold-raio);
+  stroke-width: 8;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+/* A. arranque: a foto endireita e avança */
+.fx .hero-photo {
+  transform: rotate(0deg) translateX(8px);
+  /* D. vibração curta depois do arranque (propriedade translate não briga com transform) */
+  animation: vibra 0.24s linear 0.3s 1;
+}
+.fx .hero-bolt {
+  transform: translate(16px, -8px);
+}
+.fx .trail {
+  transform: scaleX(1.2);
+}
+/* C. eco: duas molduras residuais atrás da foto */
+.fx .eco-1 {
+  transform: translateX(-26px) rotate(-2deg);
+  opacity: 0.9;
+}
+.fx .eco-2 {
+  transform: translateX(-52px) rotate(-2deg);
+  opacity: 0.6;
+}
+/* E. o contorno do raio se desenha de novo */
+.fx .bolt-hover {
+  animation: raio-traca 0.6s ease-out 0.1s;
+}
+@keyframes vibra {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  20% {
+    translate: -1.5px 1px;
+  }
+  40% {
+    translate: 1.5px -1px;
+  }
+  60% {
+    translate: -1px -1px;
+  }
+  80% {
+    translate: 1px 1px;
+  }
+}
+@keyframes raio-traca {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 1;
+  }
+  70% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
 }
 
 @keyframes raio-entra {
@@ -920,7 +1005,24 @@ a {
   .btn,
   .link,
   .feature-cta,
-  .nav-link {
+  .nav-link,
+  .hero-photo,
+  .hero-bolt,
+  .trail {
     transition: none;
+  }
+  .eco-frame {
+    display: none;
+  }
+  .fx .hero-photo {
+    transform: rotate(-2deg);
+    animation: none;
+  }
+  .fx .hero-bolt,
+  .fx .trail {
+    transform: none;
+  }
+  .fx .bolt-hover {
+    animation: none;
   }
 }
