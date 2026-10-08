@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 // Eventos do GoatCounter (sem cookies). Cada evento é um "caminho" com prefixo:
 //   clique/<nome>  → clique em link marcado com data-gc="<nome>"
 //   secao/<nome>   → seção que chegou à tela (uma vez por visita)
+//   tempo/<faixa>  → visitante ficou 30 s, 1 min ou 3 min com a aba visível
 // Se o GoatCounter não carregou (bloqueador de anúncios) ou a página é a de
 // estatísticas, nada é enviado.
 export const ROTULOS = {
@@ -21,6 +22,9 @@ export const ROTULOS = {
   'secao/tecnologias': 'Seção: Tecnologias',
   'secao/estudos': 'Seção: Estudos',
   'secao/contato': 'Seção: Contato',
+  'tempo/30s': 'Ficou 30 segundos',
+  'tempo/1min': 'Ficou 1 minuto',
+  'tempo/3min': 'Ficou 3 minutos',
 }
 
 export function registrar(path, tentativas = 3) {
@@ -67,4 +71,28 @@ export function useSecoesVistas(ids) {
     })
     return () => obs.disconnect()
   }, [ids])
+}
+
+// Tempo no site por faixas, contando só os segundos com a aba visível.
+// Cada faixa é registrada no máximo uma vez por visita (sem cookie, sem dado pessoal).
+const FAIXAS = [
+  [30, 'tempo/30s'],
+  [60, 'tempo/1min'],
+  [180, 'tempo/3min'],
+]
+export function useTempoNoSite() {
+  useEffect(() => {
+    let segundos = 0
+    let proxima = 0
+    const id = setInterval(() => {
+      if (document.visibilityState !== 'visible') return
+      segundos += 1
+      if (proxima < FAIXAS.length && segundos >= FAIXAS[proxima][0]) {
+        registrar(FAIXAS[proxima][1])
+        proxima += 1
+        if (proxima >= FAIXAS.length) clearInterval(id)
+      }
+    }, 1000)
+    return () => clearInterval(id)
+  }, [])
 }

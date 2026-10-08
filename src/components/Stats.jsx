@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ROTULOS } from '../analytics'
+import Barras from './Barras'
+import Mapa from './Mapa'
 
 // Página privada de estatísticas (#/stats). A chave da API do GoatCounter fica
 // só no navegador de quem digitou (localStorage). Nunca vai para o código do site.
@@ -48,14 +50,23 @@ async function api(conta, token, caminho, params) {
   return r.json()
 }
 
-// Três tipos: páginas (visitas), cliques (eventos clique/...) e seções (eventos secao/...)
+// Quatro tipos: páginas (visitas) e eventos clique/..., secao/..., tempo/...
 function paraItem(h) {
-  const cat = !h.event ? 'paginas' : h.path.startsWith('clique/') ? 'cliques' : h.path.startsWith('secao/') ? 'secoes' : 'outro'
+  const p = h.path || ''
+  const cat = !h.event
+    ? 'paginas'
+    : p.startsWith('clique/')
+      ? 'cliques'
+      : p.startsWith('secao/')
+        ? 'secoes'
+        : p.startsWith('tempo/')
+          ? 'tempo'
+          : 'outro'
   const porDia = {}
   ;(h.stats || []).forEach((s) => {
     porDia[String(s.day).slice(0, 10)] = s.daily || 0
   })
-  return { path: h.path, rotulo: ROTULOS[h.path] || h.path, cat, total: h.count || 0, porDia }
+  return { path: p, rotulo: ROTULOS[p] || p, cat, total: h.count || 0, porDia }
 }
 
 async function buscar(conta, token, dias) {
@@ -71,19 +82,29 @@ async function buscar(conta, token, dias) {
     api(conta, token, 'stats/total', anterior),
   ])
   // Quebras (origem, aparelho, navegador, país): se alguma falhar, só some o painel
-  const extra = await Promise.allSettled(
-    ['toprefs', 'sizes', 'browsers', 'locations'].map((p) => api(conta, token, `stats/${p}`, `${atual}&limit=8`)),
-  )
+  const pedidos = [
+    ['toprefs', 8],
+    ['sizes', 8],
+    ['browsers', 8],
+    ['locations', 100],
+  ]
+  const extra = await Promise.allSettled(pedidos.map(([p, n]) => api(conta, token, `stats/${p}`, `${atual}&limit=${n}`)))
   const lista = (i) => (extra[i].status === 'fulfilled' ? extra[i].value.stats || [] : null)
+  const serieTotal = {}
+  ;(total.stats || []).forEach((s) => {
+    serieTotal[String(s.day).slice(0, 10)] = s.daily || 0
+  })
   return {
     inicio,
     fim,
     dias,
+    consulta: atual,
     itens: (hits.hits || []).map(paraItem),
     itensAnt: (hitsAnt.hits || []).map(paraItem),
     mais: !!hits.more,
     visitantes: Math.max(0, (total.total || 0) - (total.total_events || 0)),
     visitantesAnt: Math.max(0, (totalAnt.total || 0) - (totalAnt.total_events || 0)),
+    serieTotal,
     origem: lista(0),
     aparelhos: lista(1),
     navegadores: lista(2),
@@ -99,13 +120,6 @@ const SIZES = {
   'Computer monitors larger than HD': 'Monitores maiores que HD',
   Unknown: 'Desconhecido',
 }
-const nomePais = (e) => {
-  try {
-    return new Intl.DisplayNames(['pt-BR'], { type: 'region' }).of(String(e.id).toUpperCase()) || e.name
-  } catch {
-    return e.name
-  }
-}
 const nomeOrigem = (e) => (!e.name || e.name === 'Direct' ? 'Acesso direto' : e.name)
 
 function listaDias(inicio, fim, itens) {
@@ -118,17 +132,16 @@ function listaDias(inicio, fim, itens) {
 }
 const dm = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
 const soma = (v) => v.reduce((a, b) => a + b, 0)
-
-// Soma de eventos/páginas específicos no período
 const totalDe = (itens, paths) => itens.filter((i) => paths.includes(i.path)).reduce((s, i) => s + i.total, 0)
 const totalCat = (itens, cat) => itens.filter((i) => i.cat === cat).reduce((s, i) => s + i.total, 0)
+const serieDe = (itens, dias, filtro) => dias.map((d) => itens.filter(filtro).reduce((s, i) => s + (i.porDia[d] || 0), 0))
 
 function Grafico({ rotulos, valores, titulo }) {
   const max = Math.max(1, ...valores)
   const topo = max <= 4 ? max : Math.ceil(max / 5) * 5
   const L = 40
   const W = 720
-  const H = 220
+  const H = 240
   const base = H - 28
   const passo = (W - L - 8) / rotulos.length
   const larg = Math.max(2, passo * 0.7)
@@ -159,6 +172,19 @@ function Grafico({ rotulos, valores, titulo }) {
   )
 }
 
+// Miniatura da evolução diária (dados reais; sem eixos)
+function Mini({ valores }) {
+  const max = Math.max(1, ...valores)
+  const n = Math.max(1, valores.length - 1)
+  const pts = valores.map((v, i) => `${(i / n) * 100},${30 - (v / max) * 28}`)
+  return (
+    <svg className="mini" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
+      <polygon points={`0,32 ${pts.join(' ')} 100,32`} className="mini-area" />
+      <polyline points={pts.join(' ')} className="mini-linha" />
+    </svg>
+  )
+}
+
 function Variacao({ atual, antes }) {
   if (!antes) return <p className="kpi-delta">Período anterior: 0</p>
   const p = Math.round(((atual - antes) / antes) * 100)
@@ -168,66 +194,90 @@ function Variacao({ atual, antes }) {
         {p > 0 ? '+' : p < 0 ? '−' : ''}
         {Math.abs(p)}%
       </strong>{' '}
-      · período anterior: {antes}
+      · antes: {antes}
     </p>
   )
 }
 
-function Kpi({ rotulo, atual, antes }) {
+function Kpi({ rotulo, atual, antes, serie }) {
   return (
-    <div className="kpi">
+    <div className="cartao kpi">
       <p className="kpi-label">{rotulo}</p>
-      <p className="kpi-num">{atual}</p>
-      <Variacao atual={atual} antes={antes} />
+      <div className="kpi-corpo">
+        <div>
+          <p className="kpi-num">{atual}</p>
+          <Variacao atual={atual} antes={antes} />
+        </div>
+        <Mini valores={serie} />
+      </div>
     </div>
   )
 }
 
-// Lista com barra fina proporcional. Se tiver onEscolher, cada linha filtra o gráfico.
-function Barras({ linhas, ativo, onEscolher }) {
-  const base = soma(linhas.map((l) => l.count)) || 1
-  if (!linhas.length) return <p className="stats-vazio">Ainda sem registros neste período.</p>
+function Cartao({ titulo, nota, classe = '', id, children }) {
   return (
-    <ul className="blist">
-      {linhas.map((l) => {
-        const pct = Math.round((l.count / base) * 100)
-        const conteudo = (
-          <>
-            <span className="bl-rot">{l.label}</span>
-            <span className="bl-num">{l.count}</span>
-            <span className="bl-pct">{pct}%</span>
-            <span className="bl-trilho" aria-hidden="true">
-              <span className="bl-fill" style={{ width: `${Math.max(pct, 2)}%` }} />
-            </span>
-          </>
-        )
-        return (
-          <li key={l.key}>
-            {onEscolher ? (
-              <button type="button" className="bl-linha" aria-pressed={ativo === l.key} onClick={() => onEscolher(l.key)}>
-                {conteudo}
-              </button>
-            ) : (
-              <div className="bl-linha">{conteudo}</div>
-            )}
-          </li>
-        )
-      })}
-    </ul>
-  )
-}
-
-function Painel({ titulo, nota, children, id }) {
-  return (
-    <section className="dpanel" id={id} aria-label={titulo}>
-      <h3 className="dpanel-titulo">{titulo}</h3>
-      {nota && <p className="dpanel-nota">{nota}</p>}
+    <section className={`cartao ${classe}`} id={id} aria-label={titulo}>
+      <h3 className="cartao-titulo">{titulo}</h3>
+      {nota && <p className="cartao-nota">{nota}</p>}
       {children}
     </section>
   )
 }
 
-function Dashboard({ dados, cat, setCat, item, setItem, agrup, setAgrup }) {
+// Rosca com legenda. Até 4 fatias + "Outros".
+function Rosca({ linhas }) {
+  const total = soma(linhas.map((l) => l.count))
+  if (!total) return <p className="stats-vazio">Ainda sem registros neste período.</p>
+  const top = linhas.slice(0, 4)
+  const resto = soma(linhas.slice(4).map((l) => l.count))
+  const itens = resto ? [...top, { key: 'outros', label: 'Outros', count: resto }] : top
+  const R = 40
+  const C = 2 * Math.PI * R
+  let acc = 0
+  return (
+    <div className="rosca">
+      <svg viewBox="0 0 100 100" className="rosca-svg" role="img" aria-label={`Total ${total}. ${itens.map((i) => `${i.label}: ${Math.round((i.count / total) * 100)}%`).join('; ')}`}>
+        {itens.map((it, i) => {
+          const len = (it.count / total) * C
+          const gap = itens.length > 1 && len > 2 ? 1.2 : 0
+          const el = (
+            <circle
+              key={it.key}
+              cx="50"
+              cy="50"
+              r={R}
+              fill="none"
+              strokeWidth="14"
+              className={`rc-${i}`}
+              strokeDasharray={`${Math.max(len - gap, 0.1)} ${C}`}
+              strokeDashoffset={-acc}
+              transform="rotate(-90 50 50)"
+            />
+          )
+          acc += len
+          return el
+        })}
+        <text x="50" y="49" textAnchor="middle" className="rosca-n">
+          {total}
+        </text>
+        <text x="50" y="62" textAnchor="middle" className="rosca-t">
+          visitas
+        </text>
+      </svg>
+      <ul className="rosca-leg">
+        {itens.map((it, i) => (
+          <li key={it.key}>
+            <span className={`dot rcb-${i}`} aria-hidden="true" />
+            <span className="leg-rot">{it.label}</span>
+            <span className="leg-pct">{Math.round((it.count / total) * 100)}%</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+function Dashboard({ dados, cat, setCat, item, setItem, agrup, setAgrup, buscarRegioes }) {
   const doCat = dados.itens.filter((i) => i.cat === cat).sort((a, b) => b.total - a.total)
   const selecionado = doCat.find((i) => i.path === item) || null
   const alvo = selecionado ? [selecionado] : doCat
@@ -247,11 +297,11 @@ function Dashboard({ dados, cat, setCat, item, setItem, agrup, setAgrup }) {
   const total = soma(valores)
   const titulo = selecionado ? selecionado.rotulo : CATEGORIAS.find((c) => c.id === cat).rotulo
 
-  const lin = (c) =>
+  const lin = (c, n = 8) =>
     dados.itens
       .filter((i) => i.cat === c)
       .sort((a, b) => b.total - a.total)
-      .slice(0, 8)
+      .slice(0, n)
       .map((i) => ({ key: i.path, label: i.rotulo, count: i.total }))
   const escolher = (c) => (path) => {
     setCat(c)
@@ -265,62 +315,54 @@ function Dashboard({ dados, cat, setCat, item, setItem, agrup, setAgrup }) {
   const A = dados.itens
   const B = dados.itensAnt
   const contatos = ['clique/whatsapp', 'clique/email']
+  const tempo = [
+    ['tempo/30s', '30 segundos'],
+    ['tempo/1min', '1 minuto'],
+    ['tempo/3min', '3 minutos'],
+  ].map(([p, r]) => ({ key: p, label: `Ficaram ${r} ou mais`, count: totalDe(A, [p]) }))
 
   return (
-    <>
-      <div className="kpis">
-        <Kpi rotulo="Visitantes" atual={dados.visitantes} antes={dados.visitantesAnt} />
-        <Kpi rotulo="Cliques em links" atual={totalCat(A, 'cliques')} antes={totalCat(B, 'cliques')} />
-        <Kpi rotulo="Pedidos de contato" atual={totalDe(A, contatos)} antes={totalDe(B, contatos)} />
-        <Kpi rotulo="Chegaram a Contato" atual={totalDe(A, ['secao/contato'])} antes={totalDe(B, ['secao/contato'])} />
-      </div>
-      <p className="stats-aviso">
-        Pedidos de contato = cliques em WhatsApp e e-mail. A comparação é com os {dados.dias} dias imediatamente anteriores.
-      </p>
+    <div className="dash-grade">
+      <Kpi rotulo="Visitantes" atual={dados.visitantes} antes={dados.visitantesAnt} serie={dias.map((d) => dados.serieTotal[d] || 0)} />
+      <Kpi rotulo="Cliques em links" atual={totalCat(A, 'cliques')} antes={totalCat(B, 'cliques')} serie={serieDe(A, dias, (i) => i.cat === 'cliques')} />
+      <Kpi rotulo="Pedidos de contato" atual={totalDe(A, contatos)} antes={totalDe(B, contatos)} serie={serieDe(A, dias, (i) => contatos.includes(i.path))} />
+      <Kpi rotulo="Chegaram a Contato" atual={totalDe(A, ['secao/contato'])} antes={totalDe(B, ['secao/contato'])} serie={serieDe(A, dias, (i) => i.path === 'secao/contato')} />
 
-      <section className="dpanel dpanel-grande" id="stats-grafico" aria-label="Acessos ao longo do tempo">
-        <div className="dpanel-topo">
-          <h3 className="dpanel-titulo">
-            {titulo}: {total} no período
+      <section className="cartao grande" id="stats-grafico" aria-label="Acessos ao longo do tempo">
+        <div className="cartao-topo">
+          <h3 className="cartao-titulo">
+            {titulo}: {total}
           </h3>
-          <div className="stats-filtros">
-            <div role="group" aria-label="Tipo de dado" className="stats-grupo">
-              {CATEGORIAS.map((c) => (
-                <button
-                  key={c.id}
-                  type="button"
-                  className="nav-link"
-                  aria-pressed={cat === c.id}
-                  onClick={() => {
-                    setCat(c.id)
-                    setItem(null)
-                  }}
-                >
-                  {c.rotulo}
-                </button>
-              ))}
-            </div>
-            <div role="group" aria-label="Agrupar por" className="stats-grupo">
-              <button type="button" className="nav-link" aria-pressed={agrup === 'dia'} onClick={() => setAgrup('dia')}>
-                Dias
-              </button>
-              <button type="button" className="nav-link" aria-pressed={agrup === 'semana'} onClick={() => setAgrup('semana')}>
-                Semanas
-              </button>
-            </div>
+          <div className="stats-grupo" role="group" aria-label="Agrupar por">
+            <button type="button" className="nav-link" aria-pressed={agrup === 'dia'} onClick={() => setAgrup('dia')}>
+              Dias
+            </button>
+            <button type="button" className="nav-link" aria-pressed={agrup === 'semana'} onClick={() => setAgrup('semana')}>
+              Semanas
+            </button>
           </div>
         </div>
-        {total > 0 ? (
-          <Grafico rotulos={rotulos} valores={valores} titulo={titulo} />
-        ) : (
-          <p className="stats-vazio">Nenhum registro neste período ainda.</p>
-        )}
-        {selecionado && (
-          <p className="section-note">
-            <button type="button" className="link stats-sair" onClick={() => setItem(null)}>
-              Mostrar todos os itens
+        <div className="stats-grupo" role="group" aria-label="Tipo de dado">
+          {CATEGORIAS.map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              className="nav-link"
+              aria-pressed={cat === c.id}
+              onClick={() => {
+                setCat(c.id)
+                setItem(null)
+              }}
+            >
+              {c.rotulo}
             </button>
-          </p>
+          ))}
+        </div>
+        {total > 0 ? <Grafico rotulos={rotulos} valores={valores} titulo={titulo} /> : <p className="stats-vazio">Nenhum registro neste período ainda.</p>}
+        {selecionado && (
+          <button type="button" className="link stats-sair" onClick={() => setItem(null)}>
+            Mostrar todos os itens
+          </button>
         )}
         <p className="stats-aviso">
           Cada item conta os visitantes dele; quem abre duas páginas entra uma vez em cada.
@@ -328,39 +370,66 @@ function Dashboard({ dados, cat, setCat, item, setItem, agrup, setAgrup }) {
         </p>
       </section>
 
-      <div className="dgrid">
-        <Painel titulo="Páginas mais vistas" nota="Clique numa linha para filtrar o gráfico.">
-          <Barras linhas={lin('paginas')} ativo={ativoDe('paginas')} onEscolher={escolher('paginas')} />
-        </Painel>
-        <Painel titulo="Seções vistas" nota="Chegaram à seção, uma vez por visita.">
-          <Barras linhas={lin('secoes')} ativo={ativoDe('secoes')} onEscolher={escolher('secoes')} />
-        </Painel>
-        <Painel titulo="Cliques em links" nota="Contato e perfis externos.">
-          <Barras linhas={lin('cliques')} ativo={ativoDe('cliques')} onEscolher={escolher('cliques')} />
-        </Painel>
-        {dados.origem && (
-          <Painel titulo="Origem do tráfego" nota="De onde vieram as visitas.">
-            <Barras linhas={mapa(dados.origem, nomeOrigem)} />
-          </Painel>
+      <Cartao titulo="Seções vistas" nota="Chegaram à seção, uma vez por visita." classe="m3">
+        <Barras linhas={lin('secoes')} ativo={ativoDe('secoes')} onEscolher={escolher('secoes')} />
+      </Cartao>
+      <Cartao titulo="Páginas mais vistas" nota="Clique numa linha para filtrar o gráfico." classe="m3">
+        <Barras linhas={lin('paginas')} ativo={ativoDe('paginas')} onEscolher={escolher('paginas')} />
+      </Cartao>
+
+      <Cartao titulo="Ações externas" nota="Cliques em contato e perfis." classe="m3">
+        <Barras linhas={lin('cliques')} ativo={ativoDe('cliques')} onEscolher={escolher('cliques')} />
+      </Cartao>
+      <Cartao titulo="Tempo no site" nota="Aba aberta e visível. Sobre os visitantes do período." classe="m3">
+        {tempo.some((t) => t.count > 0) ? (
+          <ul className="blist">
+            {tempo.map((t) => {
+              const pct = dados.visitantes ? Math.min(100, Math.round((t.count / dados.visitantes) * 100)) : 0
+              return (
+                <li key={t.key}>
+                  <div className="bl-linha">
+                    <span className="bl-rot">{t.label}</span>
+                    <span className="bl-num">{t.count}</span>
+                    <span className="bl-pct">{pct}%</span>
+                    <span className="bl-trilho" aria-hidden="true">
+                      <span className="bl-fill" style={{ width: `${Math.max(pct, 2)}%` }} />
+                    </span>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <p className="stats-vazio">Ainda sem registros. A medição começa a valer depois do último deploy.</p>
         )}
-        {dados.aparelhos && (
-          <Painel titulo="Tamanho de tela" nota="Celular, tablet ou computador.">
-            <Barras linhas={mapa(dados.aparelhos, (e) => SIZES[e.name] || e.name)} />
-          </Painel>
-        )}
-        {dados.navegadores && (
-          <Painel titulo="Navegadores">
-            <Barras linhas={mapa(dados.navegadores, (e) => e.name)} />
-          </Painel>
-        )}
-        {dados.paises && (
-          <Painel titulo="Países">
-            <Barras linhas={mapa(dados.paises, nomePais)} />
-          </Painel>
-        )}
-      </div>
-      <p className="stats-aviso">Porcentagens calculadas sobre os itens listados em cada painel.</p>
-    </>
+      </Cartao>
+      {dados.aparelhos && (
+        <Cartao titulo="Dispositivos" nota="Tamanho de tela." classe="m3">
+          <Rosca linhas={mapa(dados.aparelhos, (e) => SIZES[e.name] || e.name)} />
+          {dados.navegadores && dados.navegadores.length > 0 && (
+            <>
+              <h4 className="cartao-sub">Navegadores</h4>
+              <Barras linhas={mapa(dados.navegadores, (e) => e.name).slice(0, 5)} />
+            </>
+          )}
+        </Cartao>
+      )}
+      {dados.origem && (
+        <Cartao titulo="Origem do tráfego" nota="De onde vieram as visitas." classe="m3">
+          <Rosca linhas={mapa(dados.origem, nomeOrigem)} />
+        </Cartao>
+      )}
+
+      {dados.paises && (
+        <Cartao titulo="Localização dos visitantes" nota="Dourado mais forte, mais acessos." classe="grande total">
+          <Mapa paises={dados.paises} buscarRegioes={buscarRegioes} />
+        </Cartao>
+      )}
+      <p className="stats-aviso total">
+        Pedidos de contato = cliques em WhatsApp e e-mail. A comparação é com os {dados.dias} dias imediatamente anteriores.
+        Porcentagens sobre os itens listados em cada cartão.
+      </p>
+    </div>
   )
 }
 
@@ -436,6 +505,12 @@ export default function Stats() {
     carregar()
   }, [carregar])
 
+  const buscarRegioes = useCallback(
+    (id) =>
+      api(cred.conta, cred.token, `stats/locations/${encodeURIComponent(id)}`, `${dados.consulta}&limit=100`).then((r) => r.stats || []),
+    [cred, dados],
+  )
+
   const entrar = (c) => {
     salvar(c)
     setCred(c)
@@ -483,7 +558,16 @@ export default function Stats() {
               </p>
             )}
             {dados && (
-              <Dashboard dados={dados} cat={cat} setCat={setCat} item={item} setItem={setItem} agrup={agrup} setAgrup={setAgrup} />
+              <Dashboard
+                dados={dados}
+                cat={cat}
+                setCat={setCat}
+                item={item}
+                setItem={setItem}
+                agrup={agrup}
+                setAgrup={setAgrup}
+                buscarRegioes={buscarRegioes}
+              />
             )}
           </>
         )}
