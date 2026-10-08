@@ -11,6 +11,11 @@ export const perfil = {
   email: 'thiagoosoa0201@gmail.com',
   github: 'https://github.com/ThiagoOlSoa',
   linkedin: 'https://www.linkedin.com/in/thiagoolsoa/',
+  whatsappNumero: '5571993276841',
+  whatsappTexto: '(71) 99327-6841',
+  whatsapp:
+    'https://wa.me/5571993276841?text=' +
+    encodeURIComponent('Oi, Thiago! Vi seu portfólio e queria conversar sobre um site ou sistema.'),
   instagram: 'https://instagram.com/thiagoolsoa',
   instagramUser: '@thiagoolsoa',
   repositorio: 'https://github.com/ThiagoOlSoa/Meu_Portfolio',
@@ -223,3 +228,31 @@ export const primeirosPassos = [
   { nome: 'TechConnect', texto: 'HTML e CSS para a página de um evento de tecnologia.', arquivo: 'Projeto2/TechConnect.html' },
   { nome: 'YouTube', texto: 'A interface do YouTube recriada só com HTML e CSS.', arquivo: 'Projeto3/Youtube.html' },
 ]
+
+export const servicos = {
+  titulo: 'Para quem precisa de um site',
+  intro:
+    'Faço sites e sistemas web para quem precisa tirar um processo do papel ou da planilha, ou apresentar o negócio na internet.',
+  itens: [
+    {
+      nome: 'Site institucional',
+      texto: 'Apresentação do negócio, serviços, localização e botão direto para o WhatsApp.',
+    },
+    {
+      nome: 'Sistema web sob medida',
+      texto: 'Cadastros, fluxos de aprovação, permissões por usuário e relatórios, como nos sistemas do estágio.',
+    },
+    {
+      nome: 'Painel ou automação interna',
+      texto: 'Planilhas e tarefas repetidas viram uma tela única, com busca e histórico.',
+    },
+  ],
+  processoTitulo: 'Como trabalho',
+  processo: [
+    'Conversa para entender o que precisa funcionar e quem vai usar.',
+    'Protótipo das telas para você aprovar antes de eu programar.',
+    'Desenvolvimento com entregas parciais, para você acompanhar.',
+    'Publicação e ajustes depois que estiver no ar.',
+  ],
+  nota: 'Valor e prazo dependem do que precisa ser feito. Passo os dois depois da primeira conversa.',
+}

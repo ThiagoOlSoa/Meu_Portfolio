@@ -14,7 +14,7 @@ export default function App() {
   useEffect(() => {
     document.title = projeto
       ? `${projeto.nome} | Thiago Soares`
-      : 'Thiago Soares | Desenvolvedor full stack'
+      : 'Thiago Soares | Desenvolvedor full stack em Salvador'
     if (projeto) window.scrollTo(0, 0)
     else if (!consumirRolagem()) window.scrollTo(0, 0)
   }, [projeto])

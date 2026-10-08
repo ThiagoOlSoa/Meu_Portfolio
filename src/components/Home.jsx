@@ -5,6 +5,7 @@ import {
   perfil,
   primeirosPassos,
   projetos,
+  servicos,
   sobre,
   tecnologias,
   trajetoria,
@@ -166,6 +167,41 @@ function Projetos() {
   )
 }
 
+function Servicos() {
+  return (
+    <Section id="servicos" titulo={servicos.titulo}>
+      <p className="section-intro">{servicos.intro}</p>
+      <dl className="defs">
+        {servicos.itens.map((i) => (
+          <div className="def" key={i.nome}>
+            <dt>{i.nome}</dt>
+            <dd>{i.texto}</dd>
+          </div>
+        ))}
+      </dl>
+      <h3 className="sub">{servicos.processoTitulo}</h3>
+      <ol className="steps">
+        {servicos.processo.map((p) => (
+          <li key={p}>{p}</li>
+        ))}
+      </ol>
+      <p className="section-note">{servicos.nota}</p>
+      <p className="section-note">
+        <a
+          className="link"
+          href="#/contato"
+          onClick={(e) => {
+            e.preventDefault()
+            irParaSecao('contato')
+          }}
+        >
+          Falar sobre o seu projeto
+        </a>
+      </p>
+    </Section>
+  )
+}
+
 function Sobre() {
   return (
     <Section id="sobre" titulo="Sobre">
@@ -232,13 +268,22 @@ function Contato() {
         <div>
           <p className="contact-title">Precisa de um site ou de um sistema web?</p>
           <p className="contact-lead">
-            Aberto a freelas. O jeito mais rápido de falar comigo é por e-mail.
+            Aberto a freelas. O jeito mais rápido de falar comigo é pelo WhatsApp.
           </p>
-          <a className="btn" href={`mailto:${perfil.email}`}>
-            Enviar e-mail
-          </a>
+          <div className="contact-actions">
+            <a className="btn" href={perfil.whatsapp} target="_blank" rel="noreferrer">
+              Chamar no WhatsApp
+            </a>
+            <a className="link" href={`mailto:${perfil.email}`}>
+              Enviar e-mail
+            </a>
+          </div>
         </div>
         <dl className="defs defs-contact">
+          <div className="def">
+            <dt>WhatsApp</dt>
+            <dd>{perfil.whatsappTexto}</dd>
+          </div>
           <div className="def">
             <dt>E-mail</dt>
             <dd>{perfil.email}</dd>
@@ -278,6 +323,7 @@ export default function Home() {
     <>
       <Hero />
       <Projetos />
+      <Servicos />
       <Sobre />
       <Tecnologias />
       <PrimeirosPassos />

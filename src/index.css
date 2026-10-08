@@ -728,6 +728,19 @@ a {
   grid-template-columns: 100px 1fr;
 }
 
+.contact-actions {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.sub {
+  margin: 40px 0 16px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
 /* Rodapé ---------------------------------------------------------------- */
 .footer {
   border-top: 1px solid var(--line);
