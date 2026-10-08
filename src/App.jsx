@@ -5,6 +5,7 @@ import { useTema } from './hooks'
 import { Footer, Header } from './components/Layout'
 import Home from './components/Home'
 import Case from './components/Case'
+import Stats from './components/Stats'
 
 export default function App() {
   const rota = useRoute()
@@ -12,9 +13,12 @@ export default function App() {
   const projeto = rota.name === 'projeto' ? projetos.find((p) => p.id === rota.id) : null
 
   useEffect(() => {
-    document.title = projeto
-      ? `${projeto.nome} | Thiago Soares`
-      : 'Thiago Soares | Desenvolvedor full stack em Salvador'
+    document.title =
+      rota.name === 'stats'
+        ? 'Estatísticas | Thiago Soares'
+        : projeto
+          ? `${projeto.nome} | Thiago Soares`
+          : 'Thiago Soares | Desenvolvedor full stack em Salvador'
     if (projeto) window.scrollTo(0, 0)
     else if (!consumirRolagem()) window.scrollTo(0, 0)
   }, [projeto])
@@ -25,7 +29,9 @@ export default function App() {
         Ir para o conteúdo
       </a>
       <Header tema={tema} onAlternarTema={alternarTema} />
-      <main id="conteudo">{projeto ? <Case projeto={projeto} /> : <Home />}</main>
+      <main id="conteudo">
+        {rota.name === 'stats' ? <Stats /> : projeto ? <Case projeto={projeto} /> : <Home />}
+      </main>
       <Footer />
     </>
   )

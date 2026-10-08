@@ -17,6 +17,7 @@ function ir(hash) {
 function ler() {
   const [a, b] = hashAtual.replace(/^#\/?/, '').split('/')
   if (a === 'projeto' && b) return { name: 'projeto', id: b }
+  if (a === 'stats') return { name: 'stats' }
   return { name: 'home' }
 }
 

@@ -1039,3 +1039,73 @@ a {
     animation: none;
   }
 }
+
+/* Página privada de estatísticas (#/stats) ------------------------------- */
+.stats-form {
+  display: grid;
+  gap: 16px;
+  max-width: 28rem;
+}
+.stats-form label {
+  display: grid;
+  gap: 6px;
+  font-weight: 650;
+}
+.stats-form input {
+  min-height: 46px;
+  padding: 0 14px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-btn);
+}
+.stats-form .btn {
+  justify-self: start;
+}
+.stats-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 28px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.stats-periodos {
+  display: flex;
+  gap: 20px;
+}
+.stats-periodos [aria-pressed='true'] {
+  color: var(--accent);
+  font-weight: 700;
+}
+.stats-sair {
+  background-color: transparent;
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+.stats-erro {
+  color: var(--accent);
+  max-width: 40rem;
+  margin: 12px 0;
+}
+.stats-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+.stats-tabela th,
+.stats-tabela td {
+  text-align: left;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.stats-tabela th:last-child,
+.stats-tabela td:last-child {
+  text-align: right;
+  width: 7rem;
+  font-variant-numeric: tabular-nums;
+}
