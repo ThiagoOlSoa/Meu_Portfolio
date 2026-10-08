@@ -10,6 +10,7 @@ import {
   tecnologias,
   trajetoria,
 } from '../content'
+import { useSecoesVistas } from '../analytics'
 import { caminhoProjeto, irParaSecao } from '../router'
 import { MapaEcossistema } from './Ecossistema'
 import { CAMINHO_RAIO, Section } from './Layout'
@@ -189,6 +190,7 @@ function Servicos() {
       <p className="section-note">
         <a
           className="link"
+          data-gc="falar-projeto"
           href="#/contato"
           onClick={(e) => {
             e.preventDefault()
@@ -235,7 +237,7 @@ function Tecnologias() {
         ))}
       </dl>
       <p className="section-note">
-        <a className="link" href={asset(certificado.arquivo)} target="_blank" rel="noreferrer">
+        <a className="link" data-gc="certificado" href={asset(certificado.arquivo)} target="_blank" rel="noreferrer">
           {certificado.texto}
         </a>
       </p>
@@ -250,7 +252,7 @@ function PrimeirosPassos() {
       <ul className="plain-list">
         {primeirosPassos.map((p) => (
           <li key={p.nome}>
-            <a className="link" href={asset(p.arquivo)} target="_blank" rel="noreferrer">
+            <a className="link" data-gc="estudo" href={asset(p.arquivo)} target="_blank" rel="noreferrer">
               {p.nome}
             </a>
             <span className="plain-desc">{p.texto}</span>
@@ -271,10 +273,10 @@ function Contato() {
             Aberto a freelas. O jeito mais rápido de falar comigo é pelo WhatsApp.
           </p>
           <div className="contact-actions">
-            <a className="btn" href={perfil.whatsapp} target="_blank" rel="noreferrer">
+            <a className="btn" data-gc="whatsapp" href={perfil.whatsapp} target="_blank" rel="noreferrer">
               Chamar no WhatsApp
             </a>
-            <a className="link" href={`mailto:${perfil.email}`}>
+            <a className="link" data-gc="email" href={`mailto:${perfil.email}`}>
               Enviar e-mail
             </a>
           </div>
@@ -291,7 +293,7 @@ function Contato() {
           <div className="def">
             <dt>GitHub</dt>
             <dd>
-              <a className="link" href={perfil.github} target="_blank" rel="noreferrer">
+              <a className="link" data-gc="github" href={perfil.github} target="_blank" rel="noreferrer">
                 ThiagoOlSoa
               </a>
             </dd>
@@ -299,7 +301,7 @@ function Contato() {
           <div className="def">
             <dt>LinkedIn</dt>
             <dd>
-              <a className="link" href={perfil.linkedin} target="_blank" rel="noreferrer">
+              <a className="link" data-gc="linkedin" href={perfil.linkedin} target="_blank" rel="noreferrer">
                 thiagoolsoa
               </a>
             </dd>
@@ -307,7 +309,7 @@ function Contato() {
           <div className="def">
             <dt>Instagram</dt>
             <dd>
-              <a className="link" href={perfil.instagram} target="_blank" rel="noreferrer">
+              <a className="link" data-gc="instagram" href={perfil.instagram} target="_blank" rel="noreferrer">
                 {perfil.instagramUser}
               </a>
             </dd>
@@ -318,7 +320,10 @@ function Contato() {
   )
 }
 
+const SECOES = ['projetos', 'servicos', 'sobre', 'tecnologias', 'estudos', 'contato']
+
 export default function Home() {
+  useSecoesVistas(SECOES)
   return (
     <>
       <Hero />

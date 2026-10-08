@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { ROTULOS } from '../analytics'
 import { Section } from './Layout'
 
 // Página privada de estatísticas (#/stats). A chave da API do GoatCounter fica
@@ -36,18 +37,84 @@ const hora = (d) => {
 async function buscar(conta, token, dias) {
   const fim = new Date()
   const inicio = new Date(fim.getTime() - dias * 86400000)
-  const q = `start=${encodeURIComponent(hora(inicio))}&end=${encodeURIComponent(hora(fim))}`
-  const base = `https://${conta}.goatcounter.com/api/v0/stats`
-  const opts = { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }
-  const [t, h] = await Promise.all([
-    fetch(`${base}/total?${q}`, opts),
-    fetch(`${base}/hits?${q}&limit=15`, opts),
-  ])
-  if (t.status === 401 || t.status === 403 || h.status === 401 || h.status === 403) {
-    throw new Error('permissao')
+  const q = `start=${encodeURIComponent(hora(inicio))}&end=${encodeURIComponent(hora(fim))}&group=day&limit=100`
+  const r = await fetch(`https://${conta}.goatcounter.com/api/v0/stats/hits?${q}`, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  })
+  if (r.status === 401 || r.status === 403) throw new Error('permissao')
+  if (!r.ok) throw new Error(`http ${r.status}`)
+  const json = await r.json()
+  return { itens: (json.hits || []).map(paraItem), inicio, fim, mais: !!json.more }
+}
+
+// Três tipos: páginas (visitas), cliques (eventos clique/...) e seções (eventos secao/...)
+function paraItem(h) {
+  const evento = !!h.event
+  const cat = !evento ? 'paginas' : h.path.startsWith('clique/') ? 'cliques' : h.path.startsWith('secao/') ? 'secoes' : 'outro'
+  const porDia = {}
+  ;(h.stats || []).forEach((s) => {
+    porDia[String(s.day).slice(0, 10)] = s.daily || 0
+  })
+  return { path: h.path, rotulo: ROTULOS[h.path] || h.path, cat, total: h.count || 0, porDia }
+}
+
+const CATEGORIAS = [
+  { id: 'paginas', rotulo: 'Páginas' },
+  { id: 'cliques', rotulo: 'Cliques' },
+  { id: 'secoes', rotulo: 'Seções vistas' },
+]
+
+function listaDias(inicio, fim, itens) {
+  const set = new Set([fim.toISOString().slice(0, 10)])
+  for (let t = inicio.getTime(); t <= fim.getTime(); t += 86400000) {
+    set.add(new Date(t).toISOString().slice(0, 10))
   }
-  if (!t.ok || !h.ok) throw new Error(`http ${t.status}/${h.status}`)
-  return { total: await t.json(), hits: await h.json() }
+  itens.forEach((i) => Object.keys(i.porDia).forEach((d) => set.add(d)))
+  return [...set].sort()
+}
+
+const dm = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
+
+function Grafico({ dias, valores, titulo }) {
+  const max = Math.max(1, ...valores)
+  const topo = max <= 4 ? max : Math.ceil(max / 5) * 5
+  const L = 40
+  const W = 720
+  const H = 220
+  const base = H - 28
+  const util = W - L - 8
+  const passo = util / dias.length
+  const larg = Math.max(2, passo * 0.7)
+  const y = (v) => base - (v / topo) * (base - 10)
+  const marcas = [0, Math.round(topo / 2), topo].filter((v, i, a) => a.indexOf(v) === i)
+  const rotX = [0, Math.floor((dias.length - 1) / 2), dias.length - 1].filter((v, i, a) => a.indexOf(v) === i)
+  return (
+    <svg
+      className="stats-grafico"
+      viewBox={`0 0 ${W} ${H}`}
+      role="img"
+      aria-label={`${titulo}. Total no período: ${valores.reduce((a, b) => a + b, 0)}. Os valores por dia estão na tabela abaixo.`}
+    >
+      {marcas.map((v) => (
+        <g key={v}>
+          <line x1={L} x2={W - 8} y1={y(v)} y2={y(v)} className="g-linha" />
+          <text x={L - 8} y={y(v) + 4} textAnchor="end" className="g-texto">
+            {v}
+          </text>
+        </g>
+      ))}
+      {dias.map((d, i) => (
+        <rect key={d} x={L + i * passo + (passo - larg) / 2} y={y(valores[i])} width={larg} height={base - y(valores[i])} className="g-barra">
+          <title>{`${dm(d)}: ${valores[i]}`}</title>
+        </rect>
+      ))}
+      {rotX.map((i) => (
+        <text key={i} x={L + i * passo + passo / 2} y={H - 6} textAnchor="middle" className="g-texto">
+          {dm(dias[i])}
+        </text>
+      ))}
+    </svg>
+  )
 }
 
 function Entrar({ onEntrar, erro }) {
@@ -91,9 +158,94 @@ function Entrar({ onEntrar, erro }) {
   )
 }
 
+function Painel({ dados, cat, setCat, item, setItem }) {
+  const itensCat = dados.itens.filter((i) => i.cat === cat).sort((a, b) => b.total - a.total)
+  const selecionado = itensCat.find((i) => i.path === item) || null
+  const alvo = selecionado ? [selecionado] : itensCat
+  const dias = listaDias(dados.inicio, dados.fim, dados.itens)
+  const valores = dias.map((d) => alvo.reduce((soma, i) => soma + (i.porDia[d] || 0), 0))
+  const total = valores.reduce((a, b) => a + b, 0)
+  const nomeCat = CATEGORIAS.find((c) => c.id === cat).rotulo
+  const titulo = selecionado ? selecionado.rotulo : nomeCat
+
+  return (
+    <>
+      <div className="stats-filtros" role="group" aria-label="Tipo de dado">
+        {CATEGORIAS.map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            className="nav-link"
+            aria-pressed={cat === c.id}
+            onClick={() => {
+              setCat(c.id)
+              setItem(null)
+            }}
+          >
+            {c.rotulo}
+          </button>
+        ))}
+      </div>
+
+      <h3 className="sub">
+        {titulo}: {total} no período
+      </h3>
+      {total > 0 ? (
+        <Grafico dias={dias} valores={valores} titulo={titulo} />
+      ) : (
+        <p className="section-intro">Nenhum registro neste período ainda.</p>
+      )}
+      <p className="section-note stats-aviso">
+        Cada item conta visitantes dele; a mesma pessoa em páginas diferentes entra uma vez em cada.
+        {dados.mais ? ' Há mais itens do que os 100 mostrados.' : ''}
+      </p>
+
+      <h3 className="sub">Por item</h3>
+      {itensCat.length ? (
+        <table className="stats-tabela">
+          <thead>
+            <tr>
+              <th scope="col">Item (clique para filtrar o gráfico)</th>
+              <th scope="col">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {itensCat.map((i) => (
+              <tr key={i.path}>
+                <td>
+                  <button
+                    type="button"
+                    className="stats-linha"
+                    aria-pressed={selecionado && selecionado.path === i.path}
+                    onClick={() => setItem(selecionado && selecionado.path === i.path ? null : i.path)}
+                  >
+                    {i.rotulo}
+                  </button>
+                </td>
+                <td>{i.total}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="section-intro">Nada nesta categoria ainda.</p>
+      )}
+      {selecionado && (
+        <p className="section-note">
+          <button type="button" className="link stats-sair" onClick={() => setItem(null)}>
+            Mostrar todos os itens
+          </button>
+        </p>
+      )}
+    </>
+  )
+}
+
 export default function Stats() {
   const [cred, setCred] = useState(lerSalvo)
   const [dias, setDias] = useState(7)
+  const [cat, setCat] = useState('paginas')
+  const [item, setItem] = useState(null)
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
@@ -175,37 +327,7 @@ export default function Stats() {
               </p>
             )}
 
-            {dados && (
-              <>
-                <dl className="defs">
-                  <div className="def">
-                    <dt>Visitantes</dt>
-                    <dd>{dados.total.total ?? 0}</dd>
-                  </div>
-                </dl>
-                <h3 className="sub">Páginas mais vistas</h3>
-                {dados.hits.hits && dados.hits.hits.length ? (
-                  <table className="stats-tabela">
-                    <thead>
-                      <tr>
-                        <th scope="col">Página</th>
-                        <th scope="col">Visitantes</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {dados.hits.hits.map((h) => (
-                        <tr key={h.path_id || h.path}>
-                          <td>{h.path}</td>
-                          <td>{h.count}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className="section-intro">Nenhuma visita neste período ainda.</p>
-                )}
-              </>
-            )}
+            {dados && <Painel dados={dados} cat={cat} setCat={setCat} item={item} setItem={setItem} />}
           </>
         )}
       </Section>
