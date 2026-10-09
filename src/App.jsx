@@ -2,6 +2,7 @@ import { Suspense, lazy, useEffect } from 'react'
 import { projetos } from './content'
 import { consumirRolagem, useRoute } from './router'
 import { useTema } from './hooks'
+import { useRevelar } from './motion'
 import { useCliques, useTempoNoSite } from './analytics'
 import { Footer, Header } from './components/Layout'
 import Home from './components/Home'
@@ -14,6 +15,7 @@ export default function App() {
   useCliques()
   useTempoNoSite()
   const [tema, alternarTema] = useTema()
+  useRevelar(rota.name + (rota.id || ''))
   const projeto = rota.name === 'projeto' ? projetos.find((p) => p.id === rota.id) : null
 
   useEffect(() => {

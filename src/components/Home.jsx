@@ -11,6 +11,7 @@ import {
   trajetoria,
 } from '../content'
 import { useSecoesVistas } from '../analytics'
+import { Contagem } from '../motion'
 import { caminhoProjeto, irParaSecao } from '../router'
 import { MapaEcossistema } from './Ecossistema'
 import { CAMINHO_RAIO, Section } from './Layout'
@@ -152,6 +153,26 @@ function Projetos() {
         Quatro sistemas que desenvolvo no estágio. O GRM está em uso; os outros três estão em
         teste e sendo conectados a ele. Nenhum dado real aparece aqui.
       </p>
+      <dl className="fatos">
+        <div>
+          <dt>Sistemas</dt>
+          <dd>
+            <Contagem para={projetos.length} />
+          </dd>
+        </div>
+        <div>
+          <dt>Em uso</dt>
+          <dd>
+            <Contagem para={projetos.filter((p) => p.status === 'uso').length} />
+          </dd>
+        </div>
+        <div>
+          <dt>Em teste</dt>
+          <dd>
+            <Contagem para={projetos.filter((p) => p.status === 'teste').length} />
+          </dd>
+        </div>
+      </dl>
       <Destaque projeto={destaque} />
       <ul className="rows">
         {demais.map((p) => (

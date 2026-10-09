@@ -1,10 +1,95 @@
+import { useEffect, useRef, useState } from 'react'
 import { asset, projetos } from '../content'
+import { movimentoReduzido } from '../motion'
 import { caminhoProjeto, irParaSecao } from '../router'
 import Ecossistema from './Ecossistema'
 import { Section } from './Layout'
 
+const TEMPO_PASSO = 4200
+
+// Sequência de telas do fluxo: troca sozinha enquanto está visível, para ao passar o mouse ou clicar.
+function Fluxo({ itens }) {
+  const [i, setI] = useState(0)
+  const [auto, setAuto] = useState(!movimentoReduzido())
+  const [visivel, setVisivel] = useState(false)
+  const [parado, setParado] = useState(false)
+  const ref = useRef(null)
+  const rodando = auto && visivel && !parado
+
+  useEffect(() => {
+    if (!('IntersectionObserver' in window)) return
+    const obs = new IntersectionObserver(([e]) => setVisivel(e.isIntersecting), { threshold: 0.5 })
+    obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (!rodando) return
+    const t = setTimeout(() => setI((x) => (x + 1) % itens.length), TEMPO_PASSO)
+    return () => clearTimeout(t)
+  }, [rodando, i, itens.length])
+
+  return (
+    <div
+      className="fluxo"
+      ref={ref}
+      onPointerEnter={(e) => e.pointerType === 'mouse' && setParado(true)}
+      onPointerLeave={() => setParado(false)}
+    >
+      <div className="fluxo-tela">
+        {itens.map((c, n) => (
+          <figure key={c.arquivo} className={n === i ? 'on' : ''} aria-hidden={n !== i}>
+            <img src={asset(`capturas/${c.arquivo}`)} alt={c.alt} loading="lazy" />
+          </figure>
+        ))}
+      </div>
+      <p className="fluxo-legenda" aria-live="polite">
+        <span className="fluxo-n">
+          {i + 1}/{itens.length}
+        </span>
+        {itens[i].legenda} Dados fictícios.
+      </p>
+      <div className="fluxo-passos">
+        {itens.map((c, n) => (
+          <button
+            key={c.arquivo}
+            type="button"
+            className={n === i ? 'on' : ''}
+            aria-current={n === i ? 'step' : undefined}
+            aria-label={`Tela ${n + 1}: ${c.legenda}`}
+            onClick={() => {
+              setI(n)
+              setAuto(false)
+            }}
+          >
+            <span
+              key={n === i && rodando ? `r${i}` : `p${n}`}
+              className={n === i && rodando ? 'run' : ''}
+              style={{ animationDuration: `${TEMPO_PASSO}ms` }}
+            />
+          </button>
+        ))}
+        <button
+          type="button"
+          className="fluxo-play"
+          onClick={() => setAuto((a) => !a)}
+          aria-pressed={!auto}
+        >
+          {auto ? 'Pausar' : 'Tocar'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function Capturas({ itens }) {
   if (!itens.length) return null
+  if (itens.length > 1)
+    return (
+      <Section id="caso-capturas" titulo="Fluxo">
+        <Fluxo itens={itens} />
+      </Section>
+    )
   return (
     <Section id="caso-capturas" titulo="Capturas">
       <div className="shots">

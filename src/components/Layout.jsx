@@ -69,7 +69,7 @@ export function Footer() {
 export function Section({ id, titulo, children }) {
   return (
     <section className="section" id={id} aria-labelledby={`${id}-titulo`}>
-      <div className="wrap split">
+      <div className="wrap split rev">
         <h2 className="section-title" id={`${id}-titulo`}>
           {titulo}
         </h2>
