@@ -41,10 +41,18 @@ const hora = (d) => {
 }
 const faixa = (a, b) => `start=${encodeURIComponent(hora(a))}&end=${encodeURIComponent(hora(b))}`
 
-async function api(conta, token, caminho, params) {
+const espera = (ms) => new Promise((ok) => setTimeout(ok, ms))
+
+// O GoatCounter limita pedidos por segundo (erro 429): espera e tenta de novo
+async function api(conta, token, caminho, params, tentativa = 0) {
   const r = await fetch(`https://${conta}.goatcounter.com/api/v0/${caminho}?${params}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   })
+  if (r.status === 429 && tentativa < 4) {
+    const seg = Number(r.headers.get('Retry-After')) || 1
+    await espera(Math.min(seg, 5) * 1000 + 150)
+    return api(conta, token, caminho, params, tentativa + 1)
+  }
   if (r.status === 401 || r.status === 403) throw new Error('permissao')
   if (!r.ok) throw new Error(`http ${r.status}`)
   return r.json()
@@ -75,12 +83,10 @@ async function buscar(conta, token, dias) {
   const antes = new Date(inicio.getTime() - dias * 86400000)
   const atual = faixa(inicio, fim)
   const anterior = faixa(antes, inicio)
-  const [hits, hitsAnt, total, totalAnt] = await Promise.all([
-    api(conta, token, 'stats/hits', `${atual}&group=day&limit=100`),
-    api(conta, token, 'stats/hits', `${anterior}&limit=100`),
-    api(conta, token, 'stats/total', atual),
-    api(conta, token, 'stats/total', anterior),
-  ])
+  const hits = await api(conta, token, 'stats/hits', `${atual}&group=day&limit=100`)
+  const hitsAnt = await api(conta, token, 'stats/hits', `${anterior}&limit=100`)
+  const total = await api(conta, token, 'stats/total', atual)
+  const totalAnt = await api(conta, token, 'stats/total', anterior)
   // Quebras (origem, aparelho, navegador, país): se alguma falhar, só some o painel
   const pedidos = [
     ['toprefs', 8],
@@ -88,7 +94,14 @@ async function buscar(conta, token, dias) {
     ['browsers', 8],
     ['locations', 100],
   ]
-  const extra = await Promise.allSettled(pedidos.map(([p, n]) => api(conta, token, `stats/${p}`, `${atual}&limit=${n}`)))
+  const extra = []
+  for (const [p, n] of pedidos) {
+    try {
+      extra.push({ status: 'fulfilled', value: await api(conta, token, `stats/${p}`, `${atual}&limit=${n}`) })
+    } catch (e) {
+      extra.push({ status: 'rejected', motivo: `${p}: ${e.message}` })
+    }
+  }
   const lista = (i) => (extra[i].status === 'fulfilled' ? extra[i].value.stats || [] : null)
   const serieTotal = {}
   ;(total.stats || []).forEach((s) => {
@@ -109,6 +122,7 @@ async function buscar(conta, token, dias) {
     aparelhos: lista(1),
     navegadores: lista(2),
     paises: lista(3),
+    falhas: extra.filter((x) => x.status === 'rejected').map((x) => x.motivo),
   }
 }
 
@@ -424,6 +438,11 @@ function Dashboard({ dados, cat, setCat, item, setItem, agrup, setAgrup, buscarR
         <Cartao titulo="Localização dos visitantes" nota="Dourado mais forte, mais acessos." classe="grande total">
           <Mapa paises={dados.paises} buscarRegioes={buscarRegioes} />
         </Cartao>
+      )}
+      {dados.falhas && dados.falhas.length > 0 && (
+        <p className="stats-aviso total">
+          Alguns quadros não carregaram ({dados.falhas.join('; ')}). Toque em Atualizar para tentar de novo.
+        </p>
       )}
       <p className="stats-aviso total">
         Pedidos de contato = cliques em WhatsApp e e-mail. A comparação é com os {dados.dias} dias imediatamente anteriores.
