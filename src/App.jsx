@@ -3,7 +3,7 @@ import { projetos } from './content'
 import { consumirRolagem, useRoute } from './router'
 import { useTema } from './hooks'
 import { useRevelar } from './motion'
-import { useCliques, useTempoNoSite } from './analytics'
+import { useCliques, useTempoNoSite, registrar } from './analytics'
 import { Footer, Header } from './components/Layout'
 import Home from './components/Home'
 import Case from './components/Case'
@@ -16,6 +16,9 @@ export default function App() {
   useTempoNoSite()
   const [tema, alternarTema] = useTema()
   useRevelar(rota.name + (rota.id || ''))
+  useEffect(() => {
+    if (rota.name === 'projeto' && rota.id) registrar(`projeto/${rota.id}`)
+  }, [rota.name, rota.id])
   const projeto = rota.name === 'projeto' ? projetos.find((p) => p.id === rota.id) : null
 
   useEffect(() => {

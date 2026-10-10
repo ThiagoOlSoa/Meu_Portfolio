@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 //   clique/<nome>  → clique em link marcado com data-gc="<nome>"
 //   secao/<nome>   → seção que chegou à tela (uma vez por visita)
 //   tempo/<faixa>  → visitante ficou 30 s, 1 min ou 3 min com a aba visível
+//   projeto/<id>   → página de um projeto aberta
 // Se o GoatCounter não carregou (bloqueador de anúncios) ou a página é a de
 // estatísticas, nada é enviado.
 export const ROTULOS = {
