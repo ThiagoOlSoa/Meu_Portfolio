@@ -1,190 +1,41 @@
-import { useCallback, useEffect, useState } from 'react'
-import { ROTULOS } from '../analytics'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Barras from './Barras'
 import Mapa from './Mapa'
+import {
+  PERIODOS,
+  SIZES,
+  agruparOrigem,
+  api,
+  buscar,
+  calcularPeriodo,
+  calcularSinais,
+  dm,
+  lerSalvo,
+  listaDias,
+  nomeOrigem,
+  salvar,
+  serieDe,
+  soma,
+  totalCat,
+  totalDe,
+} from '../stats/dados'
 
 // Página privada de estatísticas (#/stats). A chave da API do GoatCounter fica
 // só no navegador de quem digitou (localStorage). Nunca vai para o código do site.
-const CHAVE = 'gc-stats'
-const PERIODOS = [
-  { dias: 7, rotulo: '7 dias' },
-  { dias: 30, rotulo: '30 dias' },
-  { dias: 90, rotulo: '90 dias' },
-]
-const CATEGORIAS = [
-  { id: 'paginas', rotulo: 'Páginas' },
+const SERIES = [
+  { id: 'visitantes', rotulo: 'Visitantes' },
   { id: 'cliques', rotulo: 'Cliques' },
   { id: 'secoes', rotulo: 'Seções vistas' },
+  { id: 'projetos', rotulo: 'Projetos' },
 ]
-
-const lerSalvo = () => {
-  try {
-    return JSON.parse(localStorage.getItem(CHAVE)) || null
-  } catch {
-    return null
-  }
-}
-const salvar = (v) => {
-  try {
-    if (v) localStorage.setItem(CHAVE, JSON.stringify(v))
-    else localStorage.removeItem(CHAVE)
-  } catch {
-    /* sem armazenamento: vale só nesta visita */
-  }
-}
-
-// A API pede datas arredondadas para a hora
-const hora = (d) => {
-  const x = new Date(d)
-  x.setMinutes(0, 0, 0)
-  return x.toISOString()
-}
-const faixa = (a, b) => `start=${encodeURIComponent(hora(a))}&end=${encodeURIComponent(hora(b))}`
-
-const espera = (ms) => new Promise((ok) => setTimeout(ok, ms))
-
-// O GoatCounter limita pedidos por segundo (erro 429): espera e tenta de novo
-async function api(conta, token, caminho, params, tentativa = 0) {
-  const r = await fetch(`https://${conta}.goatcounter.com/api/v0/${caminho}?${params}`, {
-    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-  })
-  if (r.status === 429 && tentativa < 4) {
-    const seg = Number(r.headers.get('Retry-After')) || 1
-    await espera(Math.min(seg, 5) * 1000 + 150)
-    return api(conta, token, caminho, params, tentativa + 1)
-  }
-  if (r.status === 401 || r.status === 403) throw new Error('permissao')
-  if (!r.ok) throw new Error(`http ${r.status}`)
-  return r.json()
-}
-
-// Quatro tipos: páginas (visitas) e eventos clique/..., secao/..., tempo/...
-function paraItem(h) {
-  const p = h.path || ''
-  const cat = !h.event
-    ? 'paginas'
-    : p.startsWith('clique/')
-      ? 'cliques'
-      : p.startsWith('secao/')
-        ? 'secoes'
-        : p.startsWith('tempo/')
-          ? 'tempo'
-          : 'outro'
-  const porDia = {}
-  ;(h.stats || []).forEach((s) => {
-    porDia[String(s.day).slice(0, 10)] = s.daily || 0
-  })
-  return { path: p, rotulo: ROTULOS[p] || p, cat, total: h.count || 0, porDia }
-}
-
-async function buscar(conta, token, dias) {
-  const fim = new Date()
-  const inicio = new Date(fim.getTime() - dias * 86400000)
-  const antes = new Date(inicio.getTime() - dias * 86400000)
-  const atual = faixa(inicio, fim)
-  const anterior = faixa(antes, inicio)
-  const hits = await api(conta, token, 'stats/hits', `${atual}&group=day&limit=100`)
-  const hitsAnt = await api(conta, token, 'stats/hits', `${anterior}&limit=100`)
-  const total = await api(conta, token, 'stats/total', atual)
-  const totalAnt = await api(conta, token, 'stats/total', anterior)
-  // Quebras (origem, aparelho, navegador, país): se alguma falhar, só some o painel
-  const pedidos = [
-    ['toprefs', 8],
-    ['sizes', 8],
-    ['browsers', 8],
-    ['locations', 100],
-  ]
-  const extra = []
-  for (const [p, n] of pedidos) {
-    try {
-      extra.push({ status: 'fulfilled', value: await api(conta, token, `stats/${p}`, `${atual}&limit=${n}`) })
-    } catch (e) {
-      extra.push({ status: 'rejected', motivo: `${p}: ${e.message}` })
-    }
-  }
-  const lista = (i) => (extra[i].status === 'fulfilled' ? extra[i].value.stats || [] : null)
-  const serieTotal = {}
-  ;(total.stats || []).forEach((s) => {
-    serieTotal[String(s.day).slice(0, 10)] = s.daily || 0
-  })
-  return {
-    inicio,
-    fim,
-    dias,
-    consulta: atual,
-    itens: (hits.hits || []).map(paraItem),
-    itensAnt: (hitsAnt.hits || []).map(paraItem),
-    mais: !!hits.more,
-    visitantes: Math.max(0, (total.total || 0) - (total.total_events || 0)),
-    visitantesAnt: Math.max(0, (totalAnt.total || 0) - (totalAnt.total_events || 0)),
-    serieTotal,
-    origem: lista(0),
-    aparelhos: lista(1),
-    navegadores: lista(2),
-    paises: lista(3),
-    falhas: extra.filter((x) => x.status === 'rejected').map((x) => x.motivo),
-  }
-}
-
-const SIZES = {
-  Phones: 'Celulares',
-  'Large phones, small tablets': 'Celulares grandes e tablets pequenos',
-  'Tablets and small laptops': 'Tablets e notebooks pequenos',
-  'Computer monitors': 'Monitores de computador',
-  'Computer monitors larger than HD': 'Monitores maiores que HD',
-  Unknown: 'Desconhecido',
-}
-const nomeOrigem = (e) => (!e.name || e.name === 'Direct' ? 'Acesso direto' : e.name)
-
-function listaDias(inicio, fim, itens) {
-  const set = new Set([fim.toISOString().slice(0, 10)])
-  for (let t = inicio.getTime(); t <= fim.getTime(); t += 86400000) {
-    set.add(new Date(t).toISOString().slice(0, 10))
-  }
-  itens.forEach((i) => Object.keys(i.porDia).forEach((d) => set.add(d)))
-  return [...set].sort()
-}
-const dm = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`
-const soma = (v) => v.reduce((a, b) => a + b, 0)
-const totalDe = (itens, paths) => itens.filter((i) => paths.includes(i.path)).reduce((s, i) => s + i.total, 0)
-const totalCat = (itens, cat) => itens.filter((i) => i.cat === cat).reduce((s, i) => s + i.total, 0)
-const serieDe = (itens, dias, filtro) => dias.map((d) => itens.filter(filtro).reduce((s, i) => s + (i.porDia[d] || 0), 0))
-
-function Grafico({ rotulos, valores, titulo }) {
-  const max = Math.max(1, ...valores)
-  const topo = max <= 4 ? max : Math.ceil(max / 5) * 5
-  const L = 40
-  const W = 720
-  const H = 240
-  const base = H - 28
-  const passo = (W - L - 8) / rotulos.length
-  const larg = Math.max(2, passo * 0.7)
-  const y = (v) => base - (v / topo) * (base - 10)
-  const marcas = [0, Math.round(topo / 2), topo].filter((v, i, a) => a.indexOf(v) === i)
-  const rotX = [0, Math.floor((rotulos.length - 1) / 2), rotulos.length - 1].filter((v, i, a) => a.indexOf(v) === i)
-  return (
-    <svg className="stats-grafico" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${titulo}. Total no período: ${soma(valores)}.`}>
-      {marcas.map((v) => (
-        <g key={v}>
-          <line x1={L} x2={W - 8} y1={y(v)} y2={y(v)} className="g-linha" />
-          <text x={L - 8} y={y(v) + 4} textAnchor="end" className="g-texto">
-            {v}
-          </text>
-        </g>
-      ))}
-      {rotulos.map((d, i) => (
-        <rect key={d} x={L + i * passo + (passo - larg) / 2} y={y(valores[i])} width={larg} height={base - y(valores[i])} className="g-barra">
-          <title>{`${d}: ${valores[i]}`}</title>
-        </rect>
-      ))}
-      {rotX.map((i) => (
-        <text key={i} x={L + i * passo + passo / 2} y={H - 6} textAnchor="middle" className="g-texto">
-          {rotulos[i]}
-        </text>
-      ))}
-    </svg>
-  )
-}
+const SECOES = [
+  ['resumo', 'Resumo'],
+  ['visitas', 'Visitas'],
+  ['projetos', 'Projetos'],
+  ['interesse', 'Interesse'],
+  ['origem', 'Origem e aparelhos'],
+  ['mapa', 'Mapa'],
+]
 
 // Miniatura da evolução diária (dados reais; sem eixos)
 function Mini({ valores }) {
@@ -199,8 +50,8 @@ function Mini({ valores }) {
   )
 }
 
-function Variacao({ atual, antes }) {
-  if (!antes) return <p className="kpi-delta">Período anterior: 0</p>
+function Variacao({ atual, antes, anterior }) {
+  if (!antes) return <p className="kpi-delta">{anterior}: 0</p>
   const p = Math.round(((atual - antes) / antes) * 100)
   return (
     <p className="kpi-delta">
@@ -208,22 +59,23 @@ function Variacao({ atual, antes }) {
         {p > 0 ? '+' : p < 0 ? '−' : ''}
         {Math.abs(p)}%
       </strong>{' '}
-      · antes: {antes}
+      · {anterior}: {antes}
     </p>
   )
 }
 
-function Kpi({ rotulo, atual, antes, serie }) {
+function Kpi({ rotulo, atual, antes, serie, anterior, nota }) {
   return (
     <div className="cartao kpi">
       <p className="kpi-label">{rotulo}</p>
       <div className="kpi-corpo">
         <div>
           <p className="kpi-num">{atual}</p>
-          <Variacao atual={atual} antes={antes} />
+          <Variacao atual={atual} antes={antes} anterior={anterior} />
         </div>
         <Mini valores={serie} />
       </div>
+      {nota && <p className="cartao-nota">{nota}</p>}
     </div>
   )
 }
@@ -291,16 +143,92 @@ function Rosca({ linhas }) {
   )
 }
 
-function Dashboard({ dados, cat, setCat, item, setItem, agrup, setAgrup, buscarRegioes }) {
-  const doCat = dados.itens.filter((i) => i.cat === cat).sort((a, b) => b.total - a.total)
-  const selecionado = doCat.find((i) => i.path === item) || null
-  const alvo = selecionado ? [selecionado] : doCat
+// Barras com guia, balão e teclado (setas, Home, End)
+function Grafico({ rotulos, valores, titulo }) {
+  const [ativo, setAtivo] = useState(null)
+  const max = Math.max(1, ...valores)
+  const topo = max <= 4 ? max : Math.ceil(max / 5) * 5
+  const estreito = typeof window !== 'undefined' && window.innerWidth < 560
+  const L = 34
+  const W = estreito ? 340 : 720
+  const H = estreito ? 230 : 240
+  const base = H - 28
+  const n = rotulos.length
+  const passo = (W - L - 8) / n
+  const larg = Math.max(2, passo * 0.7)
+  const y = (v) => base - (v / topo) * (base - 10)
+  const marcas = [0, Math.round(topo / 2), topo].filter((v, i, a) => a.indexOf(v) === i)
+  const rotX = [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i)
+  const tecla = (e) => {
+    const f = { ArrowRight: (i) => Math.min(n - 1, (i ?? -1) + 1), ArrowLeft: (i) => Math.max(0, (i ?? n) - 1), Home: () => 0, End: () => n - 1 }[e.key]
+    if (f) {
+      e.preventDefault()
+      setAtivo(f)
+    } else if (e.key === 'Escape') setAtivo(null)
+  }
+  const cx = ativo === null ? 0 : L + ativo * passo + passo / 2
+  return (
+    <div className="grafico-caixa" onMouseLeave={() => setAtivo(null)}>
+      <svg
+        className="stats-grafico"
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        tabIndex={0}
+        onKeyDown={tecla}
+        onBlur={() => setAtivo(null)}
+        aria-label={`${titulo}. Total no período: ${soma(valores)}. Use as setas para ler dia a dia.`}
+      >
+        {marcas.map((v) => (
+          <g key={v}>
+            <line x1={L} x2={W - 8} y1={y(v)} y2={y(v)} className="g-linha" />
+            <text x={L - 8} y={y(v) + 4} textAnchor="end" className="g-texto">
+              {v}
+            </text>
+          </g>
+        ))}
+        {ativo !== null && <line x1={cx} x2={cx} y1={6} y2={base} className="g-guia" />}
+        {rotulos.map((d, i) => (
+          <g key={d}>
+            <rect x={L + i * passo + (passo - larg) / 2} y={y(valores[i])} width={larg} height={base - y(valores[i])} className={`g-barra${ativo === i ? ' on' : ''}`} />
+            <rect x={L + i * passo} y={0} width={passo} height={base} fill="transparent" onMouseEnter={() => setAtivo(i)} onMouseMove={() => setAtivo(i)} onClick={() => setAtivo(i)} />
+          </g>
+        ))}
+        {rotX.map((i) => (
+          <text key={i} x={L + i * passo + passo / 2} y={H - 6} textAnchor="middle" className="g-texto">
+            {rotulos[i]}
+          </text>
+        ))}
+      </svg>
+      {ativo !== null && (
+        <p className="g-balao" style={{ left: `${Math.min(88, Math.max(12, (cx / W) * 100))}%` }} aria-live="polite">
+          <strong>{valores[ativo]}</strong> · {rotulos[ativo]}
+        </p>
+      )}
+    </div>
+  )
+}
 
-  const dias = listaDias(dados.inicio, dados.fim, dados.itens)
-  const porDia = dias.map((d) => alvo.reduce((s, i) => s + (i.porDia[d] || 0), 0))
+function Dashboard({ dados, serie, setSerie, agrup, setAgrup, buscarRegioes }) {
+  const A = dados.itens
+  const B = dados.itensAnt
+  const per = dados.per
+  const ant = per.anterior
+  const dias = listaDias(per, A)
+  const ehPag = (i) => i.cat === 'paginas'
+  const visitasDia = serieDe(A, dias, ehPag)
+  const contatos = ['clique/whatsapp', 'clique/email']
+  const um = ['tempo/1min']
+
+  const filtros = {
+    visitantes: ehPag,
+    cliques: (i) => i.cat === 'cliques',
+    secoes: (i) => i.cat === 'secoes',
+    projetos: (i) => i.cat === 'projetos',
+  }
+  const porDia = serieDe(A, dias, filtros[serie])
   let rotulos = dias.map(dm)
   let valores = porDia
-  if (agrup === 'semana') {
+  if (agrup === 'semana' && dias.length > 7) {
     rotulos = []
     valores = []
     for (let i = 0; i < dias.length; i += 7) {
@@ -309,145 +237,194 @@ function Dashboard({ dados, cat, setCat, item, setItem, agrup, setAgrup, buscarR
     }
   }
   const total = soma(valores)
-  const titulo = selecionado ? selecionado.rotulo : CATEGORIAS.find((c) => c.id === cat).rotulo
+  const titulo = SERIES.find((c) => c.id === serie).rotulo
 
   const lin = (c, n = 8) =>
-    dados.itens
-      .filter((i) => i.cat === c)
+    A.filter((i) => i.cat === c)
       .sort((a, b) => b.total - a.total)
       .slice(0, n)
       .map((i) => ({ key: i.path, label: i.rotulo, count: i.total }))
-  const escolher = (c) => (path) => {
-    setCat(c)
-    setItem((atual) => (atual === path && cat === c ? null : path))
-    const g = document.getElementById('stats-grafico')
-    if (g) g.scrollIntoView({ block: 'nearest' })
-  }
-  const ativoDe = (c) => (cat === c ? item : null)
   const mapa = (arr, rot) => arr.map((e, i) => ({ key: `${e.id || i}`, label: rot(e), count: e.count }))
-
-  const A = dados.itens
-  const B = dados.itensAnt
-  const contatos = ['clique/whatsapp', 'clique/email']
   const tempo = [
     ['tempo/30s', '30 segundos'],
     ['tempo/1min', '1 minuto'],
     ['tempo/3min', '3 minutos'],
   ].map(([p, r]) => ({ key: p, label: `Ficaram ${r} ou mais`, count: totalDe(A, [p]) }))
+  const projetos = lin('projetos')
+  const sinais = calcularSinais(dados)
 
   return (
-    <div className="dash-grade">
-      <Kpi rotulo="Visitantes" atual={dados.visitantes} antes={dados.visitantesAnt} serie={dias.map((d) => dados.serieTotal[d] || 0)} />
-      <Kpi rotulo="Cliques em links" atual={totalCat(A, 'cliques')} antes={totalCat(B, 'cliques')} serie={serieDe(A, dias, (i) => i.cat === 'cliques')} />
-      <Kpi rotulo="Pedidos de contato" atual={totalDe(A, contatos)} antes={totalDe(B, contatos)} serie={serieDe(A, dias, (i) => contatos.includes(i.path))} />
-      <Kpi rotulo="Chegaram a Contato" atual={totalDe(A, ['secao/contato'])} antes={totalDe(B, ['secao/contato'])} serie={serieDe(A, dias, (i) => i.path === 'secao/contato')} />
-
-      <section className="cartao grande" id="stats-grafico" aria-label="Acessos ao longo do tempo">
-        <div className="cartao-topo">
-          <h3 className="cartao-titulo">
-            {titulo}: {total}
-          </h3>
-          <div className="stats-grupo" role="group" aria-label="Agrupar por">
-            <button type="button" className="nav-link" aria-pressed={agrup === 'dia'} onClick={() => setAgrup('dia')}>
-              Dias
-            </button>
-            <button type="button" className="nav-link" aria-pressed={agrup === 'semana'} onClick={() => setAgrup('semana')}>
-              Semanas
-            </button>
-          </div>
+    <div className="dash-secoes">
+      <section id="resumo" className="dash-sec" aria-label="Resumo">
+        <div className="kpis">
+          <Kpi rotulo="Visitantes" atual={dados.visitantes} antes={dados.visitantesAnt} serie={visitasDia} anterior={ant} />
+          <Kpi rotulo="Pedidos de contato" atual={totalDe(A, contatos)} antes={totalDe(B, contatos)} serie={serieDe(A, dias, (i) => contatos.includes(i.path))} anterior={ant} nota="Cliques em WhatsApp e e-mail." />
+          <Kpi rotulo="Ficaram 1 minuto ou mais" atual={totalDe(A, um)} antes={totalDe(B, um)} serie={serieDe(A, dias, (i) => um.includes(i.path))} anterior={ant} nota="Aba aberta e visível." />
+          <Kpi rotulo="Cliques no currículo" atual={totalDe(A, ['clique/curriculo'])} antes={totalDe(B, ['clique/curriculo'])} serie={serieDe(A, dias, (i) => i.path === 'clique/curriculo')} anterior={ant} nota="Fica em zero até o currículo existir no site." />
         </div>
-        <div className="stats-grupo" role="group" aria-label="Tipo de dado">
-          {CATEGORIAS.map((c) => (
-            <button
-              key={c.id}
-              type="button"
-              className="nav-link"
-              aria-pressed={cat === c.id}
-              onClick={() => {
-                setCat(c.id)
-                setItem(null)
-              }}
-            >
-              {c.rotulo}
-            </button>
-          ))}
-        </div>
-        {total > 0 ? <Grafico rotulos={rotulos} valores={valores} titulo={titulo} /> : <p className="stats-vazio">Nenhum registro neste período ainda.</p>}
-        {selecionado && (
-          <button type="button" className="link stats-sair" onClick={() => setItem(null)}>
-            Mostrar todos os itens
-          </button>
-        )}
-        <p className="stats-aviso">
-          Cada item conta os visitantes dele; quem abre duas páginas entra uma vez em cada.
-          {dados.mais ? ' Há mais itens do que os 100 mostrados.' : ''}
-        </p>
       </section>
 
-      <Cartao titulo="Seções vistas" nota="Chegaram à seção, uma vez por visita." classe="m3">
-        <Barras linhas={lin('secoes')} ativo={ativoDe('secoes')} onEscolher={escolher('secoes')} />
-      </Cartao>
-      <Cartao titulo="Páginas mais vistas" nota="Clique numa linha para filtrar o gráfico." classe="m3">
-        <Barras linhas={lin('paginas')} ativo={ativoDe('paginas')} onEscolher={escolher('paginas')} />
-      </Cartao>
+      <section id="visitas" className="dash-sec" aria-label="Visitas ao longo do tempo">
+        <h2 className="dash-h">Visitas</h2>
+        <div className="cartao grande">
+          <div className="cartao-topo">
+            <h3 className="cartao-titulo">
+              {titulo}: {total}
+            </h3>
+            {dias.length > 7 && (
+              <div className="stats-grupo" role="group" aria-label="Agrupar por">
+                <button type="button" className="nav-link" aria-pressed={agrup === 'dia'} onClick={() => setAgrup('dia')}>
+                  Dias
+                </button>
+                <button type="button" className="nav-link" aria-pressed={agrup === 'semana'} onClick={() => setAgrup('semana')}>
+                  Semanas
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="stats-grupo" role="group" aria-label="Tipo de dado">
+            {SERIES.map((c) => (
+              <button key={c.id} type="button" className="nav-link" aria-pressed={serie === c.id} onClick={() => setSerie(c.id)}>
+                {c.rotulo}
+              </button>
+            ))}
+          </div>
+          {total > 0 ? <Grafico key={serie + agrup + per.id} rotulos={rotulos} valores={valores} titulo={titulo} /> : <p className="stats-vazio">Nenhum registro neste período ainda.</p>}
+          <p className="stats-aviso">
+            Cada item conta os visitantes dele; quem abre duas páginas entra uma vez em cada.
+            {dados.mais ? ' Há mais itens do que os 100 mostrados.' : ''}
+          </p>
+        </div>
+      </section>
 
-      <Cartao titulo="Ações externas" nota="Cliques em contato e perfis." classe="m3">
-        <Barras linhas={lin('cliques')} ativo={ativoDe('cliques')} onEscolher={escolher('cliques')} />
-      </Cartao>
-      <Cartao titulo="Tempo no site" nota="Aba aberta e visível. Sobre os visitantes do período." classe="m3">
-        {tempo.some((t) => t.count > 0) ? (
-          <ul className="blist">
-            {tempo.map((t) => {
-              const pct = dados.visitantes ? Math.min(100, Math.round((t.count / dados.visitantes) * 100)) : 0
-              return (
-                <li key={t.key}>
-                  <div className="bl-linha">
-                    <span className="bl-rot">{t.label}</span>
-                    <span className="bl-num">{t.count}</span>
-                    <span className="bl-pct">{pct}%</span>
-                    <span className="bl-trilho" aria-hidden="true">
-                      <span className="bl-fill" style={{ width: `${Math.max(pct, 2)}%` }} />
-                    </span>
-                  </div>
-                </li>
-              )
-            })}
+      <section id="projetos" className="dash-sec" aria-label="Projetos mais acessados">
+        <h2 className="dash-h">Projetos</h2>
+        <div className="dash-grade">
+          <Cartao titulo="Projetos mais acessados" nota="Abertura da página de cada sistema. A contagem começou no último deploy." classe="m3 meio">
+            <Barras linhas={projetos} vazio="Ainda sem aberturas de projeto neste período." />
+          </Cartao>
+          <Cartao titulo="Seções vistas" nota="Chegaram à seção, uma vez por visita." classe="m3 meio">
+            <Barras linhas={lin('secoes')} />
+          </Cartao>
+          <Cartao titulo="Ações externas" nota="Cliques em contato e perfis." classe="m3 meio">
+            <Barras linhas={lin('cliques')} />
+          </Cartao>
+          <Cartao titulo="Tempo no site" nota="Aba aberta e visível. Sobre os visitantes do período." classe="m3 meio">
+            {tempo.some((t) => t.count > 0) ? (
+              <Barras linhas={tempo.map((t) => ({ ...t, count: t.count }))} base={dados.visitantes} />
+            ) : (
+              <p className="stats-vazio">Ainda sem registros neste período.</p>
+            )}
+          </Cartao>
+        </div>
+      </section>
+
+      <section id="interesse" className="dash-sec" aria-label="Sinais de interesse">
+        <h2 className="dash-h">Sinais de interesse</h2>
+        {sinais.length ? (
+          <ul className="sinais">
+            {sinais.map((s) => (
+              <li key={s.tag}>
+                <span className="sinal-tag">{s.tag}</span>
+                <span>{s.texto}</span>
+              </li>
+            ))}
           </ul>
         ) : (
-          <p className="stats-vazio">Ainda sem registros. A medição começa a valer depois do último deploy.</p>
+          <p className="stats-vazio">Os sinais aparecem a partir de {20} visitantes no período, para não tirar conclusão de pouca coisa.</p>
         )}
-      </Cartao>
-      {dados.aparelhos && (
-        <Cartao titulo="Dispositivos" nota="Tamanho de tela." classe="m3">
-          <Rosca linhas={mapa(dados.aparelhos, (e) => SIZES[e.name] || e.name)} />
-          {dados.navegadores && dados.navegadores.length > 0 && (
-            <>
-              <h4 className="cartao-sub">Navegadores</h4>
-              <Barras linhas={mapa(dados.navegadores, (e) => e.name).slice(0, 5)} />
-            </>
-          )}
-        </Cartao>
-      )}
-      {dados.origem && (
-        <Cartao titulo="Origem do tráfego" nota="De onde vieram as visitas." classe="m3">
-          <Rosca linhas={mapa(dados.origem, nomeOrigem)} />
-        </Cartao>
-      )}
+        <p className="stats-aviso">Frases calculadas dos números acima, sem estimativa.</p>
+      </section>
 
-      {dados.paises && (
-        <Cartao titulo="Localização dos visitantes" nota="Dourado mais forte, mais acessos." classe="grande total">
-          <Mapa paises={dados.paises} buscarRegioes={buscarRegioes} />
-        </Cartao>
-      )}
+      <section id="origem" className="dash-sec" aria-label="Origem e aparelhos">
+        <h2 className="dash-h">Origem e aparelhos</h2>
+        <div className="dash-grade">
+          {dados.origem && (
+            <Cartao titulo="Origem do tráfego" nota="De onde vieram as visitas." classe="m3 meio">
+              <Rosca linhas={agruparOrigem(dados.origem)} />
+              <h4 className="cartao-sub">Detalhe</h4>
+              <Barras linhas={mapa(dados.origem, nomeOrigem).slice(0, 6)} />
+            </Cartao>
+          )}
+          {dados.aparelhos && (
+            <Cartao titulo="Dispositivos" nota="Tamanho de tela." classe="m3 meio">
+              <Rosca linhas={mapa(dados.aparelhos, (e) => SIZES[e.name] || e.name)} />
+              {dados.navegadores && dados.navegadores.length > 0 && (
+                <>
+                  <h4 className="cartao-sub">Navegadores</h4>
+                  <Barras linhas={mapa(dados.navegadores, (e) => e.name).slice(0, 5)} />
+                </>
+              )}
+            </Cartao>
+          )}
+        </div>
+      </section>
+
+      <section id="mapa" className="dash-sec" aria-label="Localização dos visitantes">
+        <h2 className="dash-h">Mapa</h2>
+        {dados.paises ? (
+          <div className="cartao grande total">
+            <h3 className="cartao-titulo">Localização dos visitantes</h3>
+            <p className="cartao-nota">Dourado mais forte, mais acessos. Toque num país para aproximar.</p>
+            <Mapa paises={dados.paises} buscarRegioes={buscarRegioes} />
+          </div>
+        ) : (
+          <p className="stats-vazio">O mapa não carregou. Toque em Atualizar.</p>
+        )}
+      </section>
+
       {dados.falhas && dados.falhas.length > 0 && (
-        <p className="stats-aviso total">
-          Alguns quadros não carregaram ({dados.falhas.join('; ')}). Toque em Atualizar para tentar de novo.
-        </p>
+        <p className="stats-aviso">Alguns quadros não carregaram ({dados.falhas.join('; ')}). Toque em Atualizar para tentar de novo.</p>
       )}
-      <p className="stats-aviso total">
-        Pedidos de contato = cliques em WhatsApp e e-mail. A comparação é com os {dados.dias} dias imediatamente anteriores.
-        Porcentagens sobre os itens listados em cada cartão.
-      </p>
+      <p className="stats-aviso">Pedidos de contato = cliques em WhatsApp e e-mail. A comparação é com {per.id === 'hoje' ? 'ontem (dia inteiro)' : `os ${dados.per.dias} dias imediatamente anteriores`}.</p>
+    </div>
+  )
+}
+
+function BarraPeriodo({ per, setPer, custom, setCustom, carregando, carregar, sair }) {
+  const [ini, setIni] = useState(custom.ini)
+  const [fim, setFim] = useState(custom.fim)
+  const hoje = new Date().toISOString().slice(0, 10)
+  const valido = ini && fim && ini <= fim
+  return (
+    <div className="stats-bar">
+      <div className="stats-grupo" role="group" aria-label="Período">
+        {PERIODOS.map((p) => (
+          <button key={p.id} type="button" className="nav-link" aria-pressed={per === p.id} onClick={() => setPer(p.id)}>
+            {p.rotulo}
+          </button>
+        ))}
+      </div>
+      <div className="stats-grupo">
+        <button type="button" className="link stats-sair" onClick={carregar} disabled={carregando}>
+          {carregando ? 'Carregando…' : 'Atualizar'}
+        </button>
+        <button type="button" className="link stats-sair" onClick={sair}>
+          Sair e apagar a chave
+        </button>
+      </div>
+      {per === 'custom' && (
+        <form
+          className="stats-datas"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (valido) setCustom({ ini, fim })
+          }}
+        >
+          <label>
+            De
+            <input type="date" value={ini} max={hoje} onChange={(e) => setIni(e.target.value)} required />
+          </label>
+          <label>
+            Até
+            <input type="date" value={fim} max={hoje} onChange={(e) => setFim(e.target.value)} required />
+          </label>
+          <button className="btn" type="submit" disabled={!valido}>
+            Aplicar
+          </button>
+          {!valido && ini && fim && <p className="stats-erro">A data inicial precisa ser anterior à final.</p>}
+        </form>
+      )}
     </div>
   )
 }
@@ -489,44 +466,50 @@ function Entrar({ onEntrar, erro }) {
 
 export default function Stats() {
   const [cred, setCred] = useState(lerSalvo)
-  const [dias, setDias] = useState(30)
-  const [cat, setCat] = useState('paginas')
-  const [item, setItem] = useState(null)
+  const [perId, setPerId] = useState('30')
+  const [custom, setCustom] = useState({ ini: '', fim: '' })
+  const [serie, setSerie] = useState('visitantes')
   const [agrup, setAgrup] = useState('dia')
   const [dados, setDados] = useState(null)
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
+  const [rec, setRec] = useState(0)
+  const per = useRef(null)
 
-  const carregar = useCallback(async () => {
-    if (!cred) return
-    setCarregando(true)
-    setErro('')
-    try {
-      setDados(await buscar(cred.conta, cred.token, dias))
-    } catch (e) {
-      setDados(null)
-      if (e.message === 'permissao') {
-        setErro('A chave foi recusada. Confira se ela tem permissão de leitura das estatísticas.')
-      } else if (e instanceof TypeError) {
-        setErro(
-          'O navegador não conseguiu falar com o GoatCounter (rede, bloqueador de anúncios ou o GoatCounter não aceita chamadas vindas deste site). Use o painel direto em ' +
-            `${cred.conta}.goatcounter.com.`,
-        )
-      } else {
-        setErro(`O GoatCounter respondeu com erro (${e.message}).`)
-      }
-    } finally {
-      setCarregando(false)
-    }
-  }, [cred, dias])
+  const carregar = useCallback(() => setRec((n) => n + 1), [])
 
   useEffect(() => {
-    carregar()
-  }, [carregar])
+    if (!cred) return
+    const p = calcularPeriodo(perId, custom.ini, custom.fim)
+    per.current = p
+    if (!p) {
+      setDados(null)
+      return
+    }
+    let ativo = true
+    setCarregando(true)
+    setErro('')
+    buscar(cred.conta, cred.token, p)
+      .then((d) => ativo && setDados(d))
+      .catch((e) => {
+        if (!ativo) return
+        setDados(null)
+        if (e.message === 'permissao') {
+          setErro('A chave foi recusada. Confira se ela tem permissão de leitura das estatísticas.')
+        } else if (e instanceof TypeError) {
+          setErro(`O navegador não conseguiu falar com o GoatCounter (rede, bloqueador de anúncios ou o GoatCounter não aceita chamadas vindas deste site). Use o painel direto em ${cred.conta}.goatcounter.com.`)
+        } else {
+          setErro(`O GoatCounter respondeu com erro (${e.message}).`)
+        }
+      })
+      .finally(() => ativo && setCarregando(false))
+    return () => {
+      ativo = false
+    }
+  }, [cred, perId, custom, rec])
 
   const buscarRegioes = useCallback(
-    (id) =>
-      api(cred.conta, cred.token, `stats/locations/${encodeURIComponent(id)}`, `${dados.consulta}&limit=100`).then((r) => r.stats || []),
+    (id) => api(cred.conta, cred.token, `stats/locations/${encodeURIComponent(id)}`, `${dados.consulta}&limit=100`).then((r) => r.stats || []),
     [cred, dados],
   )
 
@@ -539,6 +522,10 @@ export default function Stats() {
     setCred(null)
     setDados(null)
     setErro('')
+  }
+  const ir = (id) => {
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
   }
 
   return (
@@ -554,40 +541,23 @@ export default function Stats() {
           <Entrar onEntrar={entrar} erro={erro} />
         ) : (
           <>
-            <div className="stats-bar">
-              <div className="stats-grupo" role="group" aria-label="Período">
-                {PERIODOS.map((p) => (
-                  <button key={p.dias} type="button" className="nav-link" aria-pressed={dias === p.dias} onClick={() => setDias(p.dias)}>
-                    {p.rotulo}
+            <BarraPeriodo per={perId} setPer={setPerId} custom={custom} setCustom={setCustom} carregando={carregando} carregar={carregar} sair={sair} />
+            {dados && (
+              <nav className="dash-nav" aria-label="Seções do painel">
+                {SECOES.map(([id, r]) => (
+                  <button key={id} type="button" className="nav-link" onClick={() => ir(id)}>
+                    {r}
                   </button>
                 ))}
-              </div>
-              <div className="stats-grupo">
-                <button type="button" className="link stats-sair" onClick={carregar} disabled={carregando}>
-                  {carregando ? 'Carregando…' : 'Atualizar'}
-                </button>
-                <button type="button" className="link stats-sair" onClick={sair}>
-                  Sair e apagar a chave
-                </button>
-              </div>
-            </div>
+              </nav>
+            )}
+            {perId === 'custom' && !dados && !carregando && !erro && <p className="stats-vazio">Escolha as datas e toque em Aplicar.</p>}
             {erro && (
               <p className="stats-erro" role="alert">
                 {erro}
               </p>
             )}
-            {dados && (
-              <Dashboard
-                dados={dados}
-                cat={cat}
-                setCat={setCat}
-                item={item}
-                setItem={setItem}
-                agrup={agrup}
-                setAgrup={setAgrup}
-                buscarRegioes={buscarRegioes}
-              />
-            )}
+            {dados && <Dashboard dados={dados} serie={serie} setSerie={setSerie} agrup={agrup} setAgrup={setAgrup} buscarRegioes={buscarRegioes} />}
           </>
         )}
       </div>

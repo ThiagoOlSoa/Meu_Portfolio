@@ -29,10 +29,18 @@ const hora = (d) => {
 }
 export const faixa = (a, b) => `start=${encodeURIComponent(hora(a))}&end=${encodeURIComponent(hora(b))}`
 
-export async function api(conta, token, caminho, params) {
+const espera = (ms) => new Promise((ok) => setTimeout(ok, ms))
+
+// O GoatCounter limita pedidos por segundo (erro 429): espera e tenta de novo
+export async function api(conta, token, caminho, params, tentativa = 0) {
   const r = await fetch(`https://${conta}.goatcounter.com/api/v0/${caminho}?${params}`, {
     headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
   })
+  if (r.status === 429 && tentativa < 4) {
+    const seg = Number(r.headers.get('Retry-After')) || 1
+    await espera(Math.min(seg, 5) * 1000 + 150)
+    return api(conta, token, caminho, params, tentativa + 1)
+  }
   if (r.status === 401 || r.status === 403) throw new Error('permissao')
   if (!r.ok) throw new Error(`http ${r.status}`)
   return r.json()
@@ -40,6 +48,7 @@ export async function api(conta, token, caminho, params) {
 
 // Períodos ---------------------------------------------------------------------
 export const PERIODOS = [
+  { id: 'hoje', rotulo: 'Hoje' },
   { id: '7', rotulo: 'Últimos 7 dias' },
   { id: '30', rotulo: 'Últimos 30 dias' },
   { id: '90', rotulo: 'Últimos 90 dias' },
@@ -53,6 +62,10 @@ export function calcularPeriodo(id, ini, fimData) {
   const agora = new Date()
   let inicio
   let fim = agora
+  if (id === 'hoje') {
+    inicio = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate())
+    return { id, inicio, fim, antesIni: new Date(inicio.getTime() - DIA), dias: 1, rotulo: 'hoje', anterior: 'ontem' }
+  }
   if (id === 'ano') {
     inicio = new Date(agora.getFullYear(), 0, 1)
   } else if (id === 'custom') {
@@ -69,7 +82,7 @@ export function calcularPeriodo(id, ini, fimData) {
     id === 'custom'
       ? `${ini.split('-').reverse().join('/')} a ${fimData.split('-').reverse().join('/')}`
       : PERIODOS.find((p) => p.id === id).rotulo.toLowerCase()
-  return { id, inicio, fim, antesIni: new Date(inicio.getTime() - dur), dias: Math.max(1, Math.round(dur / DIA)), rotulo }
+  return { id, inicio, fim, antesIni: new Date(inicio.getTime() - dur), dias: Math.max(1, Math.round(dur / DIA)), rotulo, anterior: 'período anterior' }
 }
 
 // Itens: páginas (visitas) e eventos clique/..., secao/..., tempo/..., projeto/...
@@ -94,12 +107,11 @@ export function paraItem(h) {
 export async function buscar(conta, token, per) {
   const atual = faixa(per.inicio, per.fim)
   const anterior = faixa(per.antesIni, per.inicio)
-  const [hits, hitsAnt, total, totalAnt] = await Promise.all([
-    api(conta, token, 'stats/hits', `${atual}&group=day&limit=100`),
-    api(conta, token, 'stats/hits', `${anterior}&limit=100`),
-    api(conta, token, 'stats/total', atual),
-    api(conta, token, 'stats/total', anterior),
-  ])
+  // Sequencial: pedidos em paralelo estouram o limite do GoatCounter
+  const hits = await api(conta, token, 'stats/hits', `${atual}&group=day&limit=100`)
+  const hitsAnt = await api(conta, token, 'stats/hits', `${anterior}&limit=100`)
+  const total = await api(conta, token, 'stats/total', atual)
+  const totalAnt = await api(conta, token, 'stats/total', anterior)
   // Quebras (origem, aparelho, navegador, país): se alguma falhar, só some o bloco
   const pedidos = [
     ['toprefs', 50],
@@ -107,7 +119,14 @@ export async function buscar(conta, token, per) {
     ['browsers', 10],
     ['locations', 100],
   ]
-  const extra = await Promise.allSettled(pedidos.map(([p, n]) => api(conta, token, `stats/${p}`, `${atual}&limit=${n}`)))
+  const extra = []
+  for (const [p, n] of pedidos) {
+    try {
+      extra.push({ status: 'fulfilled', value: await api(conta, token, `stats/${p}`, `${atual}&limit=${n}`) })
+    } catch (e) {
+      extra.push({ status: 'rejected', motivo: `${p}: ${e.message}` })
+    }
+  }
   const lista = (i) => (extra[i].status === 'fulfilled' ? extra[i].value.stats || [] : null)
   const serieTotal = {}
   ;(total.stats || []).forEach((s) => {
@@ -126,6 +145,7 @@ export async function buscar(conta, token, per) {
     aparelhos: lista(1),
     navegadores: lista(2),
     paises: lista(3),
+    falhas: extra.filter((x) => x.status === 'rejected').map((x) => x.motivo),
   }
 }
 

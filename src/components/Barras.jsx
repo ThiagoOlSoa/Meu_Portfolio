@@ -1,13 +1,13 @@
 const soma = (v) => v.reduce((a, b) => a + b, 0)
 
 // Lista com barra fina proporcional. Se tiver onEscolher, cada linha vira botão.
-export default function Barras({ linhas, ativo, onEscolher, vazio = 'Ainda sem registros neste período.' }) {
-  const base = soma(linhas.map((l) => l.count)) || 1
+export default function Barras({ linhas, ativo, onEscolher, base: baseFixa, vazio = 'Ainda sem registros neste período.' }) {
+  const base = baseFixa || soma(linhas.map((l) => l.count)) || 1
   if (!linhas.length) return <p className="stats-vazio">{vazio}</p>
   return (
     <ul className="blist">
       {linhas.map((l) => {
-        const pct = Math.round((l.count / base) * 100)
+        const pct = Math.min(100, Math.round((l.count / base) * 100))
         const conteudo = (
           <>
             <span className="bl-rot">{l.label}</span>
