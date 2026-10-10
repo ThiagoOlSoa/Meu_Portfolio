@@ -258,6 +258,27 @@ export default function Mapa({ paises, buscarRegioes }) {
   return (
     <div className="mapa">
       <div className="mapa-col">
+        <div className="mapa-barra">
+          <div className="mapa-trilha">
+            {sel && (
+              <button type="button" className="mapa-btn" onClick={voltar}>
+                ← Mundo
+              </button>
+            )}
+            <span>{sel ? `Mundo › ${nomeSel}` : 'Mundo'}</span>
+          </div>
+          <div className="mapa-ctrl" role="group" aria-label="Controles do mapa">
+            <button type="button" className="mapa-btn" aria-label="Diminuir zoom" onClick={() => zoom(1.35)}>
+              −
+            </button>
+            <button type="button" className="mapa-btn" aria-label="Aumentar zoom" onClick={() => zoom(0.74)}>
+              +
+            </button>
+            <button type="button" className="mapa-btn" onClick={enquadrar}>
+              Enquadrar
+            </button>
+          </div>
+        </div>
         <div
           className="mapa-caixa"
           ref={caixa}
@@ -270,28 +291,6 @@ export default function Mapa({ paises, buscarRegioes }) {
             setDica(null)
           }}
         >
-          <div className="mapa-barra" onPointerDown={(e) => e.stopPropagation()}>
-            <div className="mapa-trilha">
-              {sel && (
-                <button type="button" className="mapa-btn" onClick={voltar}>
-                  ← Mundo
-                </button>
-              )}
-              <span>{sel ? `Mundo › ${nomeSel}` : 'Mundo'}</span>
-            </div>
-            <div className="mapa-ctrl" role="group" aria-label="Controles do mapa">
-              <button type="button" className="mapa-btn" aria-label="Diminuir zoom" onClick={() => zoom(1.35)}>
-                −
-              </button>
-              <button type="button" className="mapa-btn" aria-label="Aumentar zoom" onClick={() => zoom(0.74)}>
-                +
-              </button>
-              <button type="button" className="mapa-btn" onClick={enquadrar}>
-                Enquadrar
-              </button>
-            </div>
-          </div>
-
           {detalhado ? (
             <svg className="mapa-svg entra" viewBox={cam.join(' ')} role="group" aria-label={`Mapa de ${nomeSel} por estado`}>
               {detalhe.regioes.map((r) => {

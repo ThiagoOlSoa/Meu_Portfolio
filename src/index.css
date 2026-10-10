@@ -1379,7 +1379,7 @@ a {
   margin-top: 8px;
 }
 .stats-grafico .g-barra {
-  fill: var(--accent);
+  fill: var(--gold);
 }
 .stats-grafico .g-linha {
   stroke: var(--line);
@@ -1467,14 +1467,14 @@ button.bl-linha:hover .bl-rot {
 .rosca-svg circle {
   stroke-linecap: butt;
 }
-.rc-0 { stroke: var(--accent); }
+.rc-0 { stroke: color-mix(in srgb, var(--gold) 55%, var(--ink)); }
 .rc-1 { stroke: var(--gold); }
-.rc-2 { stroke: var(--gold-raio); stroke-opacity: 0.55; }
+.rc-2 { stroke: var(--gold-raio); stroke-opacity: 0.45; }
 .rc-3 { stroke: var(--muted); }
 .rc-4 { stroke: var(--line); }
-.rcb-0 { background: var(--accent); }
+.rcb-0 { background: color-mix(in srgb, var(--gold) 55%, var(--ink)); }
 .rcb-1 { background: var(--gold); }
-.rcb-2 { background: var(--gold-raio); opacity: 0.55; }
+.rcb-2 { background: var(--gold-raio); opacity: 0.45; }
 .rcb-3 { background: var(--muted); }
 .rcb-4 { background: var(--line); }
 .rosca-n {
@@ -1688,7 +1688,7 @@ button.bl-linha:hover .bl-rot {
   outline-offset: 2px;
 }
 .stats-grafico .g-barra.on {
-  fill: var(--gold);
+  fill: var(--ink);
 }
 .stats-grafico .g-guia {
   stroke: var(--muted);
@@ -1761,20 +1761,11 @@ button.bl-linha:hover .bl-rot {
   min-width: 0;
 }
 .mapa-barra {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  z-index: 2;
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
-  pointer-events: none;
-}
-.mapa-barra > * {
-  pointer-events: auto;
 }
 .mapa-trilha {
   display: flex;
@@ -1885,4 +1876,15 @@ button.bl-linha:hover .bl-rot {
 }
 .mapa-resumo dl > div {
   display: grid;
+}
+
+@media (max-width: 720px) {
+  .mapa-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .mapa-caixa {
+    margin: 0 -20px;
+    border-radius: 0;
+  }
 }
